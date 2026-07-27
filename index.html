@@ -64,7 +64,7 @@
           <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 flex items-center gap-2">
             KACM Member Portal
             <span class="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
-              My KACM
+              Read-Only
             </span>
           </h1>
           <p class="text-xs text-slate-500 font-medium">Keishamthong Apunba Chaokhat Marup</p>
@@ -73,7 +73,7 @@
 
       <div class="flex items-center gap-2">
         <span class="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full font-medium hidden sm:inline-block">
-          Latest Member Information
+          Live Google Sheet Sync
         </span>
       </div>
     </div>
@@ -185,7 +185,7 @@
               <span>💳</span>
               <span>Contribution History</span>
             </h2>
-           
+            <p class="text-xs text-slate-500">Ordered by descending transaction date • Swipe to browse records</p>
           </div>
           <span id="contrib-count-badge" class="text-xs font-bold bg-white text-slate-700 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-sm self-start sm:self-auto">
             0 Records
@@ -216,7 +216,7 @@
           <div>
             <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
               <span>🏛️</span>
-              <span>Core Team</span>
+              <span>KACM Executive Core Team</span>
             </h2>
             <p class="text-xs text-slate-500">Official Committee Office Bearers &amp; Leadership</p>
           </div>
@@ -282,7 +282,7 @@
   <footer class="bg-white border-t border-slate-200/80 py-6 text-center text-xs text-slate-500 mt-auto">
     <div class="max-w-5xl mx-auto px-4 space-y-1">
       <p class="font-semibold text-slate-700">Keishamthong Apunba Chaokhat Marup (KACM)</p>
-      <p>© 2026 KACM • Official Member Portal</p>
+      <p>Data synced live from Google Sheets • Official Read-Only Member Portal</p>
     </div>
   </footer>
 
@@ -472,6 +472,24 @@
         const coreRows = await fetchSheetData('Core Team');
         const coreTeamList = [];
 
+        // Lookup table for photos from Form Responses 1
+        const allFormMembers = memberRows.map(r => {
+          if (!r || !r.c) return null;
+          const fmName = r.c[2] ? String(r.c[2].v || '').trim() : '';
+          const fmPhone = cleanDigits(r.c[4] ? r.c[4].v : (r.c[3] ? r.c[3].v : ''));
+          let fmPhoto = r.c[5] ? String(r.c[5].v || '').trim() : '';
+          if (fmPhoto && fmPhoto.startsWith('http')) {
+            if (fmPhoto.includes('drive.google.com/open?id=')) {
+              const fileId = fmPhoto.split('id=')[1]?.split('&')[0];
+              if (fileId) fmPhoto = `https://lh3.googleusercontent.com/d/${fileId}=s400`;
+            } else if (fmPhoto.includes('drive.google.com/file/d/')) {
+              const fileId = fmPhoto.split('/file/d/')[1]?.split('/')[0];
+              if (fileId) fmPhoto = `https://lh3.googleusercontent.com/d/${fileId}=s400`;
+            }
+          }
+          return { name: fmName, phone: fmPhone, photoUrl: fmPhoto };
+        }).filter(Boolean);
+
         for (let i = 0; i < coreRows.length; i++) {
           const tr = coreRows[i];
           if (!tr || !tr.c) continue;
@@ -489,12 +507,33 @@
 
           if (designation && designation !== '—') {
             const cPhone = cleanDigits(memberStr);
+            const cName = memberStr ? memberStr.split(':')[0].trim() : 'Vacant';
+
             if (cPhone && cPhone.slice(-10) === phone.slice(-10)) coreRole = designation;
+
+            let photoUrl = '';
+            if (memberStr && memberStr !== 'Vacant') {
+              const matched = allFormMembers.find(fm => {
+                if (fm.phone && cPhone && fm.phone.slice(-10) === cPhone.slice(-10)) return true;
+                if (fm.name && cName) {
+                  const fmLower = fm.name.toLowerCase().trim();
+                  const ctLower = cName.toLowerCase().trim();
+                  const strLower = memberStr.toLowerCase().trim();
+                  if (fmLower && (strLower.includes(fmLower) || ctLower.includes(fmLower) || fmLower.includes(ctLower))) return true;
+                }
+                return false;
+              });
+              if (matched && matched.photoUrl) {
+                photoUrl = matched.photoUrl;
+              }
+            }
+
             coreTeamList.push({
               designation,
               roles: roles || 'Executive Office Bearer',
               memberStr: memberStr || 'Vacant',
-              hasMember: Boolean(memberStr && memberStr !== 'Vacant')
+              hasMember: Boolean(memberStr && memberStr !== 'Vacant'),
+              photoUrl
             });
           }
         }
@@ -629,6 +668,8 @@
             return {
               banner: 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600',
               badge: 'bg-amber-100 text-amber-900 border-amber-300',
+              avatarBg: 'from-amber-500 via-orange-500 to-red-500',
+              ring: 'from-amber-400 via-orange-400 to-yellow-500',
               phoneBtn: 'text-amber-800 bg-amber-50 border-amber-200 hover:bg-amber-100',
               shadow: 'shadow-xl shadow-amber-500/10 hover:shadow-2xl hover:shadow-amber-500/20 border-amber-200/80',
               titleColor: 'text-amber-800',
@@ -639,6 +680,8 @@
             return {
               banner: 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700',
               badge: 'bg-blue-100 text-blue-900 border-blue-300',
+              avatarBg: 'from-blue-600 via-indigo-600 to-violet-600',
+              ring: 'from-blue-400 via-indigo-400 to-purple-400',
               phoneBtn: 'text-blue-800 bg-blue-50 border-blue-200 hover:bg-blue-100',
               shadow: 'shadow-xl shadow-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/20 border-blue-200/80',
               titleColor: 'text-blue-800',
@@ -649,6 +692,8 @@
             return {
               banner: 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700',
               badge: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+              avatarBg: 'from-emerald-600 via-teal-600 to-cyan-600',
+              ring: 'from-emerald-400 via-teal-400 to-cyan-400',
               phoneBtn: 'text-emerald-800 bg-emerald-50 border-emerald-200 hover:bg-emerald-100',
               shadow: 'shadow-xl shadow-emerald-500/10 hover:shadow-2xl hover:shadow-emerald-500/20 border-emerald-200/80',
               titleColor: 'text-emerald-800',
@@ -659,6 +704,8 @@
             {
               banner: 'bg-gradient-to-r from-purple-600 via-violet-600 to-fuchsia-600',
               badge: 'bg-purple-100 text-purple-900 border-purple-300',
+              avatarBg: 'from-purple-600 via-violet-600 to-fuchsia-600',
+              ring: 'from-purple-400 via-fuchsia-400 to-pink-400',
               phoneBtn: 'text-purple-800 bg-purple-50 border-purple-200 hover:bg-purple-100',
               shadow: 'shadow-xl shadow-purple-500/10 hover:shadow-2xl hover:shadow-purple-500/20 border-purple-200/80',
               titleColor: 'text-purple-800',
@@ -667,6 +714,8 @@
             {
               banner: 'bg-gradient-to-r from-rose-500 via-pink-600 to-rose-600',
               badge: 'bg-rose-100 text-rose-900 border-rose-300',
+              avatarBg: 'from-rose-500 via-pink-600 to-red-600',
+              ring: 'from-rose-400 via-pink-400 to-red-400',
               phoneBtn: 'text-rose-800 bg-rose-50 border-rose-200 hover:bg-rose-100',
               shadow: 'shadow-xl shadow-rose-500/10 hover:shadow-2xl hover:shadow-rose-500/20 border-rose-200/80',
               titleColor: 'text-rose-800',
@@ -684,6 +733,8 @@
           const isVacant = t.memberStr === 'Vacant' || !t.memberStr;
           const theme = getRoleThemeStyle(t.designation, idx);
           const phoneMatch = t.memberStr ? cleanDigits(t.memberStr) : '';
+          const nameClean = t.memberStr ? t.memberStr.split(':')[0].trim() : 'Vacant';
+          const initials = nameClean && !isVacant ? nameClean.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() : '?';
 
           card.className = `rounded-3xl border ${theme.shadow} ${theme.bgTint} overflow-hidden flex flex-col justify-between transition-all duration-300 group hover:-translate-y-1 ${
             isVacant ? 'opacity-60 bg-slate-50 border-dashed' : ''
@@ -691,20 +742,30 @@
 
           card.innerHTML = `
             <div class="w-full h-2.5 ${theme.banner}"></div>
-            <div class="p-5 w-full flex flex-col justify-between flex-1 space-y-3">
-              <div class="space-y-2 w-full">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${theme.badge}">${t.designation}</span>
-                  <span class="text-[10px] font-bold ${isVacant ? 'text-amber-700 bg-amber-50 border border-amber-200' : 'text-emerald-700 bg-emerald-50 border border-emerald-200'} px-2 py-0.5 rounded-full">
-                    ${isVacant ? 'Vacant' : 'Active'}
-                  </span>
+            <div class="p-5 w-full flex flex-col items-center text-center justify-between flex-1 space-y-3">
+              
+              <!-- Photo / Initials Avatar -->
+              <div class="relative mb-1">
+                <div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr ${theme.ring} shadow-md overflow-hidden flex items-center justify-center bg-white">
+                  ${t.photoUrl ? `
+                    <img src="${t.photoUrl}" alt="${nameClean}" class="w-full h-full rounded-full object-cover" onError="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                  ` : ''}
+                  <div class="w-full h-full rounded-full bg-gradient-to-br ${theme.avatarBg} text-white font-black text-xl flex items-center justify-center shadow-inner" style="${t.photoUrl ? 'display:none;' : 'display:flex;'}">
+                    ${initials}
+                  </div>
                 </div>
-                <p class="text-sm font-extrabold text-slate-900 pt-1">${t.memberStr}</p>
+              </div>
+
+              <div class="space-y-1.5 w-full">
+                <div class="flex items-center justify-center gap-2">
+                  <span class="text-[11px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full border ${theme.badge}">${t.designation}</span>
+                </div>
+                <p class="text-base font-extrabold text-slate-900 pt-0.5">${t.memberStr}</p>
               </div>
 
               ${phoneMatch && !isVacant ? `
                 <div>
-                  <a href="tel:${phoneMatch}" class="inline-flex items-center gap-1.5 text-xs font-bold ${theme.phoneBtn} px-3.5 py-1 rounded-full transition shadow-sm">
+                  <a href="tel:${phoneMatch}" class="inline-flex items-center gap-1.5 text-xs font-bold ${theme.phoneBtn} px-4 py-1.5 rounded-full transition shadow-sm">
                     <span>📞</span>
                     <span>${phoneMatch}</span>
                   </a>
@@ -712,9 +773,9 @@
               ` : ''}
 
               ${t.roles ? `
-                <div class="text-[11px] text-slate-600 text-left pt-2.5 border-t border-slate-100/80 w-full mt-auto line-clamp-2 leading-relaxed font-medium">
-                  <strong class="font-bold block mb-0.5 ${theme.titleColor}">Responsibilities:</strong>
-                  ${t.roles}
+                <div class="text-xs sm:text-sm text-slate-800 font-medium text-left pt-3 border-t border-slate-200/80 w-full mt-auto leading-relaxed">
+                  <strong class="font-extrabold block mb-1 text-xs uppercase tracking-wider ${theme.titleColor}">Responsibilities:</strong>
+                  <span>${t.roles}</span>
                 </div>
               ` : ''}
             </div>
