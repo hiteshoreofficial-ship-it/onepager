@@ -767,7 +767,7 @@
                 <div>
                   <a href="tel:${phoneMatch}" class="inline-flex items-center gap-1.5 text-xs font-bold ${theme.phoneBtn} px-4 py-1.5 rounded-full transition shadow-sm">
                     <span>📞</span>
-                    <span>${phoneMatch}</span>
+                    <span>${phoneMatch.slice(0,2) + "*".repeat(phoneMatch.length - 4) + phoneMatch.slice(-2)}</span>
                   </a>
                 </div>
               ` : ''}
