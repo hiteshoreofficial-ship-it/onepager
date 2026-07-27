@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>KACM Member Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -130,7 +133,8 @@
   <script>
     const SPREADSHEET_ID = "1yqBz_fRFmtvT8LhIyltwDv7w1ePgNtI-RqrAYWs_kLk";
     async function fetchSheetData(name) {
-      const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}`);
+      const cacheBuster = Date.now();
+      const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}&t=${cacheBuster}`, { cache: 'no-store', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } });
       const text = await res.text();
       const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
       return match ? JSON.parse(match[1]).table.rows : [];
