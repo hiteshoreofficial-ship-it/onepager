@@ -733,7 +733,7 @@
           const isVacant = t.memberStr === 'Vacant' || !t.memberStr;
           const theme = getRoleThemeStyle(t.designation, idx);
           const phoneMatch = t.memberStr ? cleanDigits(t.memberStr) : '';
-          const nameClean = t.memberStr ? t.memberStr.split(':')[0].trim() : 'Vacant';
+          const nameClean = t.memberStr ? t.memberStr.substring(0, t.memberStr.lastIndexOf(':')).trim() : 'Vacant';
           const initials = nameClean && !isVacant ? nameClean.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() : '?';
 
           card.className = `rounded-3xl border ${theme.shadow} ${theme.bgTint} overflow-hidden flex flex-col justify-between transition-all duration-300 group hover:-translate-y-1 ${
