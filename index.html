@@ -7,222 +7,506 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>KACM Member Portal</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <style>
-    :root { --font-serif: 'Playfair Display', Georgia, serif; --font-sans: 'Plus Jakarta Sans', sans-serif; }
-    body { font-family: var(--font-sans); }
-    .font-serif { font-family: var(--font-serif); }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    @media print { body * { visibility: hidden; } #receipt-modal, #receipt-modal * { visibility: visible; } #receipt-modal { position: absolute; left: 0; top: 0; width: 100%; background: white; } }
+    :root {
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', sans-serif;
+    }
+    body {
+      font-family: var(--font-sans);
+    }
+    .font-serif {
+      font-family: var(--font-serif);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #receipt-modal, #receipt-modal * {
+        visibility: visible;
+      }
+      #receipt-modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white;
+      }
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- TOP HEADER / BRAND BAR -->
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 text-slate-900 shadow-sm">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white font-black text-xl flex items-center justify-center shadow-md shadow-blue-500/20">🏛️</div>
+        <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white font-black text-xl flex items-center justify-center shadow-md shadow-blue-500/20">
+          🏛️
+        </div>
         <div>
           <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            KACM Member Portal <span class="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">Read-Only</span>
+            KACM Member Portal
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+              Read-Only
+            </span>
           </h1>
           <p class="text-xs text-slate-500 font-medium">Keishamthong Apunba Chaokhat Marup</p>
         </div>
       </div>
-      <span class="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full font-medium hidden sm:inline-block">Live Google Sheet Sync</span>
+
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full font-medium hidden sm:inline-block">
+          Live Google Sheet Sync
+        </span>
+      </div>
     </div>
   </header>
 
+  <!-- MAIN PORTAL CONTAINER -->
   <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- INITIAL LOADING STATE -->
     <div id="loading-state" class="bg-white rounded-3xl border border-slate-200/80 p-12 text-center shadow-sm my-8 space-y-4">
       <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
       <p class="text-slate-600 font-medium text-sm">Fetching member details live from Google Sheet...</p>
     </div>
 
+    <!-- ERROR STATE (Phone missing or member not found) -->
     <div id="error-state" class="hidden bg-white rounded-3xl border border-rose-200 p-8 sm:p-12 text-center shadow-sm my-8 space-y-4">
-      <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center text-3xl mx-auto border border-rose-100">⚠️</div>
+      <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center text-3xl mx-auto border border-rose-100">
+        ⚠️
+      </div>
       <h2 class="text-xl font-bold text-slate-900" id="error-title">Member Not Found</h2>
-      <p class="text-slate-600 text-sm max-w-md mx-auto" id="error-message">No phone number was provided in URL.</p>
+      <p class="text-slate-600 text-sm max-w-md mx-auto" id="error-message">
+        No phone number was provided in URL.
+      </p>
     </div>
 
+    <!-- MEMBER PORTAL CONTENT (Visible once data loaded) -->
     <div id="portal-content" class="hidden space-y-6">
+
+      <!-- PROFILE HERO CARD -->
       <section class="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
         <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
+          
+          <!-- Avatar Container -->
           <div id="avatar-container" class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-slate-800 border-2 border-slate-700/80 shadow-2xl overflow-hidden flex items-center justify-center shrink-0">
             <span id="avatar-fallback" class="text-4xl font-black text-slate-400">👤</span>
             <img id="avatar-img" src="" alt="Member Photo" class="hidden w-full h-full object-cover" />
           </div>
+
+          <!-- Details -->
           <div class="flex-1 text-center md:text-left space-y-3">
             <div class="flex flex-wrap items-center justify-center md:justify-start gap-2">
-              <span class="inline-flex items-center gap-1.5 bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold px-3 py-1 rounded-full">🏛️ KACM Registered Member</span>
-              <span id="core-team-badge" class="hidden inline-flex items-center gap-1.5 bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold px-3 py-1 rounded-full">⭐ <span id="core-team-role">Role</span></span>
+              <span class="inline-flex items-center gap-1.5 bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold px-3 py-1 rounded-full">
+                <span>🏛️</span>
+                <span>KACM Registered Member</span>
+              </span>
+              <span id="core-team-badge" class="hidden inline-flex items-center gap-1.5 bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold px-3 py-1 rounded-full">
+                <span>⭐</span>
+                <span id="core-team-role">Executive Committee</span>
+              </span>
             </div>
-            <h1 id="member-name" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-serif">—</h1>
+
+            <h1 id="member-name" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-serif">
+              —
+            </h1>
+
             <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs text-slate-300 pt-1">
-              <div class="bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5">👤 <span id="gender-val">—</span></div>
-              <div class="bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5">📞 <span id="phone-val" class="font-mono">—</span></div>
-              <div id="email-chip" class="hidden bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl items-center gap-1.5">✉️ <span id="email-val">—</span></div>
+              <div class="bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                <span>👤</span>
+                <span id="gender-val" class="font-medium">—</span>
+              </div>
+              <div class="bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                <span>📞</span>
+                <span id="phone-val" class="font-medium font-mono">—</span>
+              </div>
+              <div id="email-chip" class="hidden bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl items-center gap-1.5">
+                <span>✉️</span>
+                <span id="email-val" class="font-medium">—</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      <!-- KPI METRICS -->
       <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-1">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase"><span>Total Contributed</span><span class="text-emerald-600 bg-emerald-50 p-1.5 rounded-xl">💰</span></div>
+          <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
+            <span>Total Contributed</span>
+            <span class="text-emerald-600 bg-emerald-50 p-1.5 rounded-xl">💰</span>
+          </div>
           <p id="kpi-total-amount" class="text-2xl font-black text-slate-900 tracking-tight">₹0</p>
+          <p class="text-[11px] text-slate-500">Cumulative verified contributions</p>
         </div>
+
         <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-1">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase"><span>Categories</span><span class="text-blue-600 bg-blue-50 p-1.5 rounded-xl">🏷️</span></div>
+          <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
+            <span>Categories</span>
+            <span class="text-blue-600 bg-blue-50 p-1.5 rounded-xl">🏷️</span>
+          </div>
           <p id="kpi-categories" class="text-2xl font-black text-slate-900 tracking-tight">0</p>
+          <p class="text-[11px] text-slate-500">Unique contribution funds</p>
         </div>
+
         <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-1">
-          <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase"><span>Transactions</span><span class="text-indigo-600 bg-indigo-50 p-1.5 rounded-xl">🔄</span></div>
+          <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
+            <span>Transactions</span>
+            <span class="text-indigo-600 bg-indigo-50 p-1.5 rounded-xl">🔄</span>
+          </div>
           <p id="kpi-transactions" class="text-2xl font-black text-slate-900 tracking-tight">0</p>
+          <p class="text-[11px] text-slate-500">Recorded receipts</p>
         </div>
       </section>
 
-      <!-- SWIPEABLE CARDS SECTION -->
+      <!-- SWIPEABLE CONTRIBUTION CARDS SECTION -->
       <section class="bg-slate-100/80 rounded-3xl border border-slate-200 p-6 space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-bold text-slate-900">💳 Contribution History</h2>
-          <span id="contrib-count-badge" class="text-xs font-bold bg-white text-slate-700 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-sm">0 Records</span>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <span>💳</span>
+              <span>Last 10 Contributions History</span>
+            </h2>
+            <p class="text-xs text-slate-500">Ordered by descending transaction date • Showing last 10 records</p>
+          </div>
+          <span id="contrib-count-badge" class="text-xs font-bold bg-white text-slate-700 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-sm self-start sm:self-auto">
+            0 Records
+          </span>
         </div>
-        <div class="text-center text-[11px] font-semibold text-slate-500 flex items-center justify-center gap-1.5">
-          <span>👈</span><span>Swipe left / right to browse contribution vouchers</span><span>👉</span>
+
+        <!-- Swipe Hint Indicator -->
+        <div class="text-center text-[11px] font-semibold text-slate-500 flex items-center justify-center gap-1.5 pt-1">
+          <span>👈</span>
+          <span>Swipe left / right to browse contribution vouchers</span>
+          <span>👉</span>
         </div>
+
+        <!-- Horizontal Swipeable Track -->
         <div id="contrib-cards-track" class="overflow-x-auto pb-4 pt-1 scrollbar-thin">
           <div id="contrib-cards-container" class="flex gap-4 w-max min-w-full"></div>
         </div>
-        <div id="no-contribs-msg" class="hidden text-center py-8 text-slate-500 text-xs">No contribution records found.</div>
+
+        <div id="no-contribs-msg" class="hidden text-center py-10 bg-white rounded-3xl border border-slate-200 p-6 space-y-2">
+          <p class="text-2xl">🧾</p>
+          <p class="font-bold text-slate-800 text-xs">No contribution records found for this member.</p>
+        </div>
       </section>
 
-      <!-- CORE TEAM SECTION -->
+      <!-- KACM EXECUTIVE CORE TEAM SECTION -->
       <section class="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-4">
-        <h2 class="text-lg font-bold text-slate-900">🏛️ KACM Executive Core Team</h2>
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <span>🏛️</span>
+              <span>KACM Executive Core Team</span>
+            </h2>
+            <p class="text-xs text-slate-500">Official Committee Office Bearers &amp; Leadership</p>
+          </div>
+          <span class="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full">
+            Committee
+          </span>
+        </div>
+
         <div id="core-team-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
       </section>
+
     </div>
   </main>
 
+  <!-- RECEIPT MODAL -->
   <div id="receipt-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 relative">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="text-sm font-bold text-slate-900">Official Payment Receipt</h3>
-        <button id="close-receipt-btn" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-full">✕</button>
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-blue-600 text-white font-bold flex items-center justify-center text-base shadow-sm">🏛️</div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Official Payment Receipt</h3>
+            <p class="text-[10px] text-slate-500 font-medium">Keishamthong Apunba Chaokhat Marup</p>
+          </div>
+        </div>
+        <button id="close-receipt-btn" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition">✕</button>
       </div>
-      <div class="space-y-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
-        <div class="flex justify-between"><span>Receipt ID:</span><span id="rcpt-id" class="font-mono font-bold">—</span></div>
-        <div class="flex justify-between"><span>Member:</span><span id="rcpt-member" class="font-bold">—</span></div>
-        <div class="flex justify-between"><span>Category:</span><span id="rcpt-category" class="font-semibold text-blue-700">—</span></div>
-        <div class="flex justify-between"><span>Date:</span><span id="rcpt-date">—</span></div>
-        <div class="flex justify-between"><span>Mode:</span><span id="rcpt-mode">—</span></div>
-        <div class="flex justify-between items-center pt-2 border-t"><span>Amount Paid:</span><span id="rcpt-amount" class="text-xl font-black text-emerald-600">₹0</span></div>
+
+      <div class="space-y-3 text-xs text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+        <div class="flex justify-between py-1 border-b border-slate-200/60">
+          <span class="text-slate-500">Receipt ID:</span>
+          <span id="rcpt-id" class="font-mono font-bold text-slate-900">—</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-slate-200/60">
+          <span class="text-slate-500">Member Name:</span>
+          <span id="rcpt-member" class="font-bold text-slate-900">—</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-slate-200/60">
+          <span class="text-slate-500">Category:</span>
+          <span id="rcpt-category" class="font-semibold text-blue-700">—</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-slate-200/60">
+          <span class="text-slate-500">Date:</span>
+          <span id="rcpt-date" class="font-medium text-slate-900">—</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-slate-200/60">
+          <span class="text-slate-500">Payment Mode:</span>
+          <span id="rcpt-mode" class="font-medium text-slate-900">—</span>
+        </div>
+        <div class="flex justify-between py-2 items-center">
+          <span class="text-sm font-bold text-slate-900">Amount Paid:</span>
+          <span id="rcpt-amount" class="text-xl font-black text-emerald-600">₹0</span>
+        </div>
       </div>
-      <div class="flex gap-2">
-        <button onclick="window.print()" class="flex-1 bg-slate-900 text-white font-bold text-xs py-2.5 rounded-full">🖨️ Print Receipt</button>
-        <button id="close-receipt-btn-2" class="px-4 py-2.5 bg-slate-100 text-slate-700 font-bold text-xs rounded-full border">Close</button>
+
+      <div class="flex items-center gap-2 pt-1">
+        <button onclick="printReceiptFromModal()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 rounded-full transition text-center shadow-sm">🖨️ Print Receipt</button>
+        <button id="rcpt-open-pdf-btn" onclick="if(activeReceiptInvoiceUrl) window.open(activeReceiptInvoiceUrl, '_blank')" class="hidden px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-full transition border border-slate-200">Open PDF</button>
+        <button id="close-receipt-btn-2" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-full transition border border-slate-200">Close</button>
       </div>
     </div>
   </div>
 
+  <footer class="bg-white border-t border-slate-200/80 py-6 text-center text-xs text-slate-500 mt-auto">
+    <div class="max-w-5xl mx-auto px-4 space-y-1">
+      <p class="font-semibold text-slate-700">Keishamthong Apunba Chaokhat Marup (KACM)</p>
+      <p>Data synced live from Google Sheets • Official Read-Only Member Portal</p>
+    </div>
+  </footer>
+
   <script>
     const SPREADSHEET_ID = "1yqBz_fRFmtvT8LhIyltwDv7w1ePgNtI-RqrAYWs_kLk";
-    async function fetchSheetData(name) {
+    let activeReceiptInvoiceUrl = '';
+
+    async function fetchSheetData(sheetName) {
       const cacheBuster = Date.now();
-      const res = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}&t=${cacheBuster}`, { cache: 'no-store', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } });
+      const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&t=${cacheBuster}`;
+      const res = await fetch(url, {
+        cache: 'no-store',
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
       const text = await res.text();
       const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
-      return match ? JSON.parse(match[1]).table.rows : [];
+      if (!match) throw new Error(`Could not parse sheet ${sheetName}`);
+      const data = JSON.parse(match[1]);
+      return data.table ? data.table.rows : [];
     }
-    function cleanDigits(s) { return s ? String(s).replace(/\D/g, '').trim() : ''; }
-    function formatDateCell(cell) {
-      if (!cell) return '—';
-      if (cell.f) return cell.f;
-      const val = String(cell.v || '');
+
+    function cleanDigits(str) { return str ? String(str).replace(/\D/g, '').trim() : ''; }
+
+    function formatDateTimeCell(cell) {
+      if (!cell) return { formatted: '—', timestamp: 0 };
+      let d = null;
+      const val = typeof cell === 'object' ? String(cell.v || cell.f || '') : String(cell || '');
+
       if (val.startsWith('Date(')) {
         const parts = val.match(/\d+/g);
         if (parts && parts.length >= 3) {
-          const d = new Date(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
-          return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10);
+          const day = parseInt(parts[2], 10);
+          const hours = parts[3] ? parseInt(parts[3], 10) : 0;
+          const minutes = parts[4] ? parseInt(parts[4], 10) : 0;
+          const seconds = parts[5] ? parseInt(parts[5], 10) : 0;
+          d = new Date(year, month, day, hours, minutes, seconds);
+        }
+      } else if (cell && cell.v instanceof Date) {
+        d = cell.v;
+      } else if (val) {
+        const match = val.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s*(AM|PM))?)?/i);
+        if (match) {
+          const day = parseInt(match[1], 10);
+          const month = parseInt(match[2], 10) - 1;
+          const year = parseInt(match[3], 10);
+          let hours = match[4] ? parseInt(match[4], 10) : 0;
+          const minutes = match[5] ? parseInt(match[5], 10) : 0;
+          const seconds = match[6] ? parseInt(match[6], 10) : 0;
+          const ampm = match[7] ? match[7].toUpperCase() : null;
+
+          if (ampm === 'PM' && hours < 12) hours += 12;
+          if (ampm === 'AM' && hours === 12) hours = 0;
+
+          d = new Date(year, month, day, hours, minutes, seconds);
+        } else {
+          const parsed = Date.parse(val);
+          if (!isNaN(parsed)) d = new Date(parsed);
         }
       }
-      return val || '—';
+
+      if (!d || isNaN(d.getTime())) {
+        return { formatted: val || '—', timestamp: 0 };
+      }
+
+      const dayStr = String(d.getDate()).padStart(2, '0');
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthStr = months[d.getMonth()];
+      const yearStr = d.getFullYear();
+
+      let hours = d.getHours();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const hoursStr = String(hours).padStart(2, '0');
+      const minStr = String(d.getMinutes()).padStart(2, '0');
+
+      return {
+        formatted: `${dayStr}-${monthStr}-${yearStr} ${hoursStr}:${minStr} ${ampm}`,
+        timestamp: d.getTime()
+      };
     }
 
     async function initPortal() {
-      const phone = cleanDigits(new URLSearchParams(window.location.search).get('phone'));
+      const loadingEl = document.getElementById('loading-state');
+      const errorEl = document.getElementById('error-state');
+      const errorMsgEl = document.getElementById('error-message');
+      const portalContentEl = document.getElementById('portal-content');
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const phone = cleanDigits(urlParams.get('phone'));
+
       if (!phone) {
-        document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('error-state').classList.remove('hidden');
+        loadingEl.classList.add('hidden');
+        errorEl.classList.remove('hidden');
+        errorMsgEl.innerHTML = `No phone parameter in URL. Please open with <code class="bg-slate-100 text-blue-700 px-1.5 py-0.5 rounded font-mono">?phone=XXXXXXXXXX</code>.`;
         return;
       }
+
       try {
+        // 1. Fetch Form Responses 1
         const memberRows = await fetchSheetData('Form Responses 1');
         let member = null;
+
         for (const r of memberRows) {
           if (!r || !r.c) continue;
           const rowPhone = cleanDigits(r.c[4] ? r.c[4].v : (r.c[3] ? r.c[3].v : ''));
-          if (rowPhone && (rowPhone === phone || rowPhone.slice(-10) === phone.slice(-10))) {
-            member = { name: r.c[2] ? String(r.c[2].v) : 'Member', gender: r.c[3] ? String(r.c[3].v) : '-', phone: r.c[4] ? String(r.c[4].v) : phone, photoUrl: r.c[5] ? String(r.c[5].v) : '', email: r.c[1] ? String(r.c[1].v) : '' };
+          if (rowPhone && (rowPhone === phone || (rowPhone.length >= 10 && phone.length >= 10 && rowPhone.slice(-10) === phone.slice(-10)))) {
+            const regInfo = formatDateTimeCell(r.c[0]);
+            member = {
+              registeredAt: regInfo.formatted,
+              email: r.c[1] ? String(r.c[1].v || '') : '',
+              name: r.c[2] ? String(r.c[2].v || 'Member') : 'Member',
+              gender: r.c[3] ? String(r.c[3].v || '-') : '-',
+              phone: r.c[4] ? String(r.c[4].v || phone) : phone,
+              photoUrl: r.c[5] ? String(r.c[5].v || '') : ''
+            };
             break;
           }
         }
+
         if (!member) {
-          document.getElementById('loading-state').classList.add('hidden');
-          document.getElementById('error-state').classList.remove('hidden');
+          loadingEl.classList.add('hidden');
+          errorEl.classList.remove('hidden');
+          errorMsgEl.innerHTML = `Member record not found for phone number: <strong class="font-mono text-slate-900">${phone}</strong> in Google Sheet.`;
           return;
         }
 
+        // 2. Fetch Contributions
         const contribRows = await fetchSheetData('Contributions');
-        const userContributions = [];
+        let userContributions = [];
+
         for (const cr of contribRows) {
           if (!cr || !cr.c) continue;
           const memberKey = cr.c[1] ? String(cr.c[1].v || '') : '';
           const cPhone = cleanDigits(memberKey);
-          if ((cPhone && cPhone.slice(-10) === phone.slice(-10)) || memberKey.toLowerCase().includes(member.name.toLowerCase())) {
+
+          const matchesPhone = cPhone && cPhone.slice(-10) === phone.slice(-10);
+          const matchesName = memberKey.toLowerCase().includes(member.name.toLowerCase());
+
+          if (matchesPhone || matchesName) {
             const id = cr.c[0] ? String(cr.c[0].v || '') : Math.random().toString(36).substring(7);
-            const categoryName = cr.c[14] ? String(cr.c[14].v || '') : (cr.c[2] ? String(cr.c[2].v || 'General') : 'General');
-            const dateStr = formatDateCell(cr.c[3]);
+            const categoryName = cr.c[14] ? String(cr.c[14].v || '') : (cr.c[2] ? String(cr.c[2].v || 'General Contribution') : 'General Contribution');
+            const dtObj = formatDateTimeCell(cr.c[3]);
             const frequency = cr.c[4] ? String(cr.c[4].v || 'One Time') : 'One Time';
             const amount = cr.c[5] ? (parseFloat(cr.c[5].v) || 0) : 0;
             const remarks = cr.c[6] ? String(cr.c[6].v || '') : '';
             const paymentVia = cr.c[11] ? String(cr.c[11].v || 'Online / UPI') : 'Online / UPI';
-            userContributions.push({ id, categoryName, dateStr, frequency, amount, paymentVia, remarks });
+            
+            let invoiceUrl = '';
+            if (cr.c[13] && cr.c[13].v && String(cr.c[13].v).startsWith('http')) {
+              invoiceUrl = String(cr.c[13].v).trim();
+            } else {
+              for (let colIdx = cr.c.length - 1; colIdx >= 0; colIdx--) {
+                const cellVal = cr.c[colIdx] && cr.c[colIdx].v ? String(cr.c[colIdx].v).trim() : '';
+                if (cellVal.startsWith('http://') || cellVal.startsWith('https://')) {
+                  invoiceUrl = cellVal;
+                  break;
+                }
+              }
+            }
+
+            userContributions.push({
+              id,
+              categoryName,
+              dateStr: dtObj.formatted,
+              timestamp: dtObj.timestamp,
+              frequency,
+              amount,
+              paymentVia,
+              remarks,
+              invoiceUrl
+            });
           }
         }
 
+        // Sort by Descending order of Transaction date and keep Last 10 only
+        userContributions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        userContributions = userContributions.slice(0, 10);
+
+        // 3. Fetch Core Team
         let coreRole = null;
         const coreRows = await fetchSheetData('Core Team');
         const coreTeamList = [];
+
         for (let i = 0; i < coreRows.length; i++) {
           const tr = coreRows[i];
           if (!tr || !tr.c) continue;
+
           const cell0 = tr.c[0] ? String(tr.c[0].v || '') : '';
           const cell1 = tr.c[1] ? String(tr.c[1].v || '') : '';
           const cell2 = tr.c[2] ? String(tr.c[2].v || '') : '';
           const cell3 = tr.c[3] ? String(tr.c[3].v || '') : '';
+
           if (cell0.toLowerCase().includes('designation') || cell1.toLowerCase().includes('designation')) continue;
+
           const designation = cell1 || cell0;
           const roles = cell2;
           const memberStr = cell3;
+
           if (designation && designation !== '—') {
             const cPhone = cleanDigits(memberStr);
             if (cPhone && cPhone.slice(-10) === phone.slice(-10)) coreRole = designation;
-            coreTeamList.push({ designation, roles: roles || 'Executive Member', memberStr: memberStr || 'Vacant' });
+            coreTeamList.push({
+              designation,
+              roles: roles || 'Executive Office Bearer',
+              memberStr: memberStr || 'Vacant',
+              hasMember: Boolean(memberStr && memberStr !== 'Vacant')
+            });
           }
         }
 
         if (coreTeamList.length === 0) {
           const defaultTeam = [
-            { designation: 'President', roles: 'Overall Governance', memberStr: 'Thounaojam Ibohal: 9862581747' },
-            { designation: 'General Secretary', roles: 'Operations', memberStr: 'Keisham Premkumar: 9856271310' },
-            { designation: 'Treasurer', roles: 'Finance & Accounts', memberStr: 'Pukhrambam Hiteshore Singh: 9862973977' },
-            { designation: 'IT Coordinator', roles: 'Digital Portal & Records', memberStr: 'Hiteshore Official: 9731399725' }
+            { designation: 'President', roles: 'Overall Administration & Governance', memberStr: 'Thounaojam Ibohal: 9862581747' },
+            { designation: 'General Secretary', roles: 'Operations & Community Affairs', memberStr: 'Keisham Premkumar: 9856271310' },
+            { designation: 'Treasurer', roles: 'Finance, Accounts & Vouchers', memberStr: 'Pukhrambam Hiteshore Singh: 9862973977' },
+            { designation: 'Digital & IT Coordinator', roles: 'Apps, Web Portal & Records', memberStr: 'Hiteshore Official: 9731399725' }
           ];
           defaultTeam.forEach(dt => {
             const cPhone = cleanDigits(dt.memberStr);
@@ -231,82 +515,197 @@
           });
         }
 
+        // Render Member Profile
         document.getElementById('member-name').textContent = member.name;
         document.getElementById('gender-val').textContent = member.gender;
         document.getElementById('phone-val').textContent = member.phone;
-        const totalAmount = userContributions.reduce((s, c) => s + c.amount, 0);
+
+        if (member.email) {
+          document.getElementById('email-chip').classList.remove('hidden');
+          document.getElementById('email-chip').classList.add('flex');
+          document.getElementById('email-val').textContent = member.email;
+        }
+
+        if (member.photoUrl && member.photoUrl.startsWith('http')) {
+          let directImg = member.photoUrl;
+          if (directImg.includes('drive.google.com/open?id=')) {
+            const fileId = directImg.split('id=')[1];
+            directImg = `https://lh3.googleusercontent.com/d/${fileId}=s400`;
+          }
+          const avatarImg = document.getElementById('avatar-img');
+          const avatarFallback = document.getElementById('avatar-fallback');
+          avatarImg.src = directImg;
+          avatarImg.onload = () => {
+            avatarImg.classList.remove('hidden');
+            avatarFallback.classList.add('hidden');
+          };
+        }
+
+        if (coreRole) {
+          document.getElementById('core-team-badge').classList.remove('hidden');
+          document.getElementById('core-team-role').textContent = coreRole;
+        }
+
+        // Render KPIs
+        const totalAmount = userContributions.reduce((sum, c) => sum + c.amount, 0);
+        const totalCategories = new Set(userContributions.map(c => c.categoryName)).size;
+
         document.getElementById('kpi-total-amount').textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
-        document.getElementById('kpi-categories').textContent = new Set(userContributions.map(c => c.categoryName)).size;
+        document.getElementById('kpi-categories').textContent = totalCategories;
         document.getElementById('kpi-transactions').textContent = userContributions.length;
         document.getElementById('contrib-count-badge').textContent = `${userContributions.length} Records`;
 
+        // Render Contributions
         const cardsContainer = document.getElementById('contrib-cards-container');
+        const noContribsEl = document.getElementById('no-contribs-msg');
+        const cardsTrack = document.getElementById('contrib-cards-track');
         cardsContainer.innerHTML = '';
-        userContributions.forEach(c => {
-          const card = document.createElement('div');
-          card.className = "w-[280px] sm:w-[310px] flex-shrink-0 bg-white rounded-3xl border border-slate-100 p-5 shadow-lg shadow-slate-200/50 flex flex-col justify-between space-y-4 hover:shadow-xl transition-all";
-          const badgeBg = c.frequency.toLowerCase().includes('monthly') ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-          card.innerHTML = `
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${badgeBg}">${c.frequency}</span>
-                <span class="text-xs font-mono font-bold text-slate-400">#${c.id}</span>
-              </div>
-              <div>
-                <div class="text-2xl font-extrabold text-slate-900">₹${c.amount.toLocaleString('en-IN')}</div>
-                <div class="text-xs font-bold text-slate-800 mt-1 line-clamp-1">${c.categoryName}</div>
-              </div>
-            </div>
-            <div class="space-y-2 text-xs text-slate-600 pt-3 border-t">
-              <div>📅 ${c.dateStr}</div>
-              <div>💳 Mode: ${c.paymentVia}</div>
-              ${c.remarks ? `<div class="text-[11px] text-slate-500 italic">📝 ${c.remarks}</div>` : ''}
-            </div>
-            <button onclick="openReceipt('${c.id}', '${encodeURIComponent(c.categoryName)}', ${c.amount}, '${encodeURIComponent(c.dateStr)}', '${encodeURIComponent(c.paymentVia)}')" class="w-full py-2.5 px-4 rounded-full font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-              📄 View Official Receipt
-            </button>
-          `;
-          cardsContainer.appendChild(card);
-        });
 
-        const cGrid = document.getElementById('core-team-grid');
-        cGrid.innerHTML = '';
+        if (userContributions.length === 0) {
+          noContribsEl.classList.remove('hidden');
+          if (cardsTrack) cardsTrack.classList.add('hidden');
+        } else {
+          userContributions.forEach(c => {
+            const card = document.createElement('div');
+            card.className = "w-[280px] sm:w-[310px] flex-shrink-0 bg-white rounded-3xl border border-slate-100 p-5 shadow-lg shadow-slate-200/50 flex flex-col justify-between space-y-4 hover:shadow-xl transition-all";
+            
+            const badgeBg = c.frequency.toLowerCase().includes('monthly') 
+              ? 'bg-blue-50 text-blue-700 border-blue-200' 
+              : (c.frequency.toLowerCase().includes('yearly') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-purple-50 text-purple-700 border-purple-200');
+
+            card.innerHTML = `
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${badgeBg}">
+                    ${c.frequency}
+                  </span>
+                  <span class="text-xs font-mono font-bold text-slate-400">#${c.id}</span>
+                </div>
+
+                <div>
+                  <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    ₹${c.amount.toLocaleString('en-IN')}
+                  </div>
+                  <div class="text-xs font-bold text-slate-800 mt-1 line-clamp-1">
+                    ${c.categoryName}
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-2 text-xs text-slate-600 font-medium pt-3 border-t border-slate-100">
+                <div class="flex items-center gap-2">
+                  <span>📅</span>
+                  <span class="text-[11px]">${c.dateStr}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span>💳</span>
+                  <span class="text-[11px]">Mode: <strong class="text-slate-900">${c.paymentVia}</strong></span>
+                </div>
+                ${c.remarks ? `
+                  <div class="flex items-start gap-1.5 pt-1 text-[11px] text-slate-500 italic">
+                    <span>📝</span>
+                    <span class="line-clamp-2">${c.remarks}</span>
+                  </div>
+                ` : ''}
+              </div>
+
+              <div class="pt-2 flex items-center gap-1.5">
+                <button onclick="handlePrintClick('${c.id}', '${encodeURIComponent(c.invoiceUrl || '')}', '${encodeURIComponent(c.categoryName)}', ${c.amount}, '${encodeURIComponent(c.dateStr)}', '${encodeURIComponent(c.paymentVia)}')" class="flex-1 py-2.5 px-3 rounded-full font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 transition shadow-sm">
+                  <span>🖨️ Print Receipt</span>
+                </button>
+                <button onclick="openReceipt('${c.id}', '${encodeURIComponent(c.invoiceUrl || '')}', '${encodeURIComponent(c.categoryName)}', ${c.amount}, '${encodeURIComponent(c.dateStr)}', '${encodeURIComponent(c.paymentVia)}')" class="py-2.5 px-3 rounded-full font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition shadow-sm">
+                  Details
+                </button>
+              </div>
+            `;
+            cardsContainer.appendChild(card);
+          });
+        }
+
+        // Render Core Team
+        const container = document.getElementById('core-team-grid');
+        container.innerHTML = '';
         coreTeamList.forEach(t => {
           const card = document.createElement('div');
           const isVacant = t.memberStr === 'Vacant' || !t.memberStr;
           card.className = "bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2 shadow-sm flex flex-col justify-between";
+          
           card.innerHTML = `
             <div class="space-y-1.5">
               <div class="flex items-center justify-between">
                 <span class="text-[10px] font-bold text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-200">${t.designation}</span>
-                <span class="text-[10px] font-bold ${isVacant ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'} px-2 py-0.5 rounded-full">${isVacant ? 'Vacant' : 'Active'}</span>
+                <span class="text-[10px] font-bold ${isVacant ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'} px-2 py-0.5 rounded-full">
+                  ${isVacant ? 'Vacant' : 'Active'}
+                </span>
               </div>
               <p class="text-xs font-extrabold text-slate-900 pt-1">${t.memberStr}</p>
               <p class="text-[11px] text-slate-500 line-clamp-2">${t.roles}</p>
             </div>
           `;
-          cGrid.appendChild(card);
+          container.appendChild(card);
         });
 
-        document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('portal-content').classList.remove('hidden');
-      } catch(err) {
-        document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('error-state').classList.remove('hidden');
+        loadingEl.classList.add('hidden');
+        portalContentEl.classList.remove('hidden');
+
+      } catch (err) {
+        console.error("Error loading portal:", err);
+        loadingEl.classList.add('hidden');
+        errorEl.classList.remove('hidden');
+        errorMsgEl.innerHTML = `Failed to fetch data from Google Sheet. Error: ${err.message}`;
       }
     }
 
-    function openReceipt(id, catEnc, amount, dateEnc, modeEnc) {
+    function handlePrintClick(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
+      const invoiceUrl = decodeURIComponent(urlEnc || '');
+      if (invoiceUrl && invoiceUrl.startsWith('http')) {
+        window.open(invoiceUrl, '_blank');
+      } else {
+        openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc);
+        window.print();
+      }
+    }
+
+    function openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
+      activeReceiptInvoiceUrl = decodeURIComponent(urlEnc || '');
+      const cat = decodeURIComponent(catEnc);
+      const date = decodeURIComponent(dateEnc);
+      const mode = decodeURIComponent(modeEnc);
+
       document.getElementById('rcpt-id').textContent = id.toUpperCase();
       document.getElementById('rcpt-member').textContent = document.getElementById('member-name').textContent;
-      document.getElementById('rcpt-category').textContent = decodeURIComponent(catEnc);
-      document.getElementById('rcpt-date').textContent = decodeURIComponent(dateEnc);
-      document.getElementById('rcpt-mode').textContent = decodeURIComponent(modeEnc);
+      document.getElementById('rcpt-category').textContent = cat;
+      document.getElementById('rcpt-date').textContent = date;
+      document.getElementById('rcpt-mode').textContent = mode;
       document.getElementById('rcpt-amount').textContent = `₹${amount.toLocaleString('en-IN')}`;
+
+      const openPdfBtn = document.getElementById('rcpt-open-pdf-btn');
+      if (openPdfBtn) {
+        if (activeReceiptInvoiceUrl && activeReceiptInvoiceUrl.startsWith('http')) {
+          openPdfBtn.classList.remove('hidden');
+        } else {
+          openPdfBtn.classList.add('hidden');
+        }
+      }
+
       document.getElementById('receipt-modal').classList.remove('hidden');
     }
-    document.getElementById('close-receipt-btn').onclick = () => document.getElementById('receipt-modal').classList.add('hidden');
-    document.getElementById('close-receipt-btn-2').onclick = () => document.getElementById('receipt-modal').classList.add('hidden');
+
+    function printReceiptFromModal() {
+      if (activeReceiptInvoiceUrl && activeReceiptInvoiceUrl.startsWith('http')) {
+        window.open(activeReceiptInvoiceUrl, '_blank');
+      } else {
+        window.print();
+      }
+    }
+
+    document.getElementById('close-receipt-btn').onclick = () => {
+      document.getElementById('receipt-modal').classList.add('hidden');
+    };
+    document.getElementById('close-receipt-btn-2').onclick = () => {
+      document.getElementById('receipt-modal').classList.add('hidden');
+    };
+
     document.addEventListener('DOMContentLoaded', initPortal);
   </script>
 </body>
