@@ -30,7 +30,7 @@
           <p class="text-xs text-slate-500 font-medium">Keishamthong Apunba Chaokhat Marup</p>
         </div>
       </div>
-      <span class="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full font-medium hidden sm:inline-block">Live Google Sheet Data</span>
+      <span class="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full font-medium hidden sm:inline-block">Live Google Sheet Sync</span>
     </div>
   </header>
 
@@ -83,24 +83,25 @@
         </div>
       </section>
 
-      <section class="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+      <!-- SWIPEABLE CARDS SECTION -->
+      <section class="bg-slate-100/80 rounded-3xl border border-slate-200 p-6 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-bold text-slate-900">💳 Contribution History</h2>
-          <span id="contrib-count-badge" class="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1 rounded-full border border-slate-200">0 Records</span>
+          <span id="contrib-count-badge" class="text-xs font-bold bg-white text-slate-700 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-sm">0 Records</span>
         </div>
-        <div class="overflow-x-auto border border-slate-200/80 rounded-2xl">
-          <table class="w-full text-left text-xs text-slate-700">
-            <thead class="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase">
-              <tr><th class="py-3 px-4">Date</th><th class="py-3 px-4">Category</th><th class="py-3 px-4">Frequency</th><th class="py-3 px-4">Amount</th><th class="py-3 px-4 text-center">Receipt</th></tr>
-            </thead>
-            <tbody id="contrib-table-body" class="divide-y divide-slate-100"></tbody>
-          </table>
+        <div class="text-center text-[11px] font-semibold text-slate-500 flex items-center justify-center gap-1.5">
+          <span>👈</span><span>Swipe left / right to browse contribution vouchers</span><span>👉</span>
         </div>
+        <div id="contrib-cards-track" class="overflow-x-auto pb-4 pt-1 scrollbar-thin">
+          <div id="contrib-cards-container" class="flex gap-4 w-max min-w-full"></div>
+        </div>
+        <div id="no-contribs-msg" class="hidden text-center py-8 text-slate-500 text-xs">No contribution records found.</div>
       </section>
 
+      <!-- CORE TEAM SECTION -->
       <section class="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-4">
         <h2 class="text-lg font-bold text-slate-900">🏛️ KACM Executive Core Team</h2>
-        <div id="core-team-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+        <div id="core-team-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
       </section>
     </div>
   </main>
@@ -111,14 +112,18 @@
         <h3 class="text-sm font-bold text-slate-900">Official Payment Receipt</h3>
         <button id="close-receipt-btn" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-full">✕</button>
       </div>
-      <div class="space-y-2 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
+      <div class="space-y-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
         <div class="flex justify-between"><span>Receipt ID:</span><span id="rcpt-id" class="font-mono font-bold">—</span></div>
         <div class="flex justify-between"><span>Member:</span><span id="rcpt-member" class="font-bold">—</span></div>
         <div class="flex justify-between"><span>Category:</span><span id="rcpt-category" class="font-semibold text-blue-700">—</span></div>
         <div class="flex justify-between"><span>Date:</span><span id="rcpt-date">—</span></div>
-        <div class="flex justify-between items-center pt-2 border-t"><span>Amount:</span><span id="rcpt-amount" class="text-xl font-black text-emerald-600">₹0</span></div>
+        <div class="flex justify-between"><span>Mode:</span><span id="rcpt-mode">—</span></div>
+        <div class="flex justify-between items-center pt-2 border-t"><span>Amount Paid:</span><span id="rcpt-amount" class="text-xl font-black text-emerald-600">₹0</span></div>
       </div>
-      <div class="flex gap-2"><button onclick="window.print()" class="flex-1 bg-slate-900 text-white font-bold text-xs py-2 rounded-full">🖨️ Print</button></div>
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="flex-1 bg-slate-900 text-white font-bold text-xs py-2.5 rounded-full">🖨️ Print Receipt</button>
+        <button id="close-receipt-btn-2" class="px-4 py-2.5 bg-slate-100 text-slate-700 font-bold text-xs rounded-full border">Close</button>
+      </div>
     </div>
   </div>
 
@@ -131,6 +136,19 @@
       return match ? JSON.parse(match[1]).table.rows : [];
     }
     function cleanDigits(s) { return s ? String(s).replace(/\D/g, '').trim() : ''; }
+    function formatDateCell(cell) {
+      if (!cell) return '—';
+      if (cell.f) return cell.f;
+      const val = String(cell.v || '');
+      if (val.startsWith('Date(')) {
+        const parts = val.match(/\d+/g);
+        if (parts && parts.length >= 3) {
+          const d = new Date(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+          return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+      }
+      return val || '—';
+    }
 
     async function initPortal() {
       const phone = cleanDigits(new URLSearchParams(window.location.search).get('phone'));
@@ -165,9 +183,48 @@
           if ((cPhone && cPhone.slice(-10) === phone.slice(-10)) || memberKey.toLowerCase().includes(member.name.toLowerCase())) {
             const id = cr.c[0] ? String(cr.c[0].v || '') : Math.random().toString(36).substring(7);
             const categoryName = cr.c[14] ? String(cr.c[14].v || '') : (cr.c[2] ? String(cr.c[2].v || 'General') : 'General');
-            const amount = cr.c[5] ? parseFloat(cr.c[5].v) || 0 : 0;
-            userContributions.push({ id, categoryName, dateStr: 'Date', frequency: 'Monthly', amount });
+            const dateStr = formatDateCell(cr.c[3]);
+            const frequency = cr.c[4] ? String(cr.c[4].v || 'One Time') : 'One Time';
+            const amount = cr.c[5] ? (parseFloat(cr.c[5].v) || 0) : 0;
+            const remarks = cr.c[6] ? String(cr.c[6].v || '') : '';
+            const paymentVia = cr.c[11] ? String(cr.c[11].v || 'Online / UPI') : 'Online / UPI';
+            userContributions.push({ id, categoryName, dateStr, frequency, amount, paymentVia, remarks });
           }
+        }
+
+        let coreRole = null;
+        const coreRows = await fetchSheetData('Core Team');
+        const coreTeamList = [];
+        for (let i = 0; i < coreRows.length; i++) {
+          const tr = coreRows[i];
+          if (!tr || !tr.c) continue;
+          const cell0 = tr.c[0] ? String(tr.c[0].v || '') : '';
+          const cell1 = tr.c[1] ? String(tr.c[1].v || '') : '';
+          const cell2 = tr.c[2] ? String(tr.c[2].v || '') : '';
+          const cell3 = tr.c[3] ? String(tr.c[3].v || '') : '';
+          if (cell0.toLowerCase().includes('designation') || cell1.toLowerCase().includes('designation')) continue;
+          const designation = cell1 || cell0;
+          const roles = cell2;
+          const memberStr = cell3;
+          if (designation && designation !== '—') {
+            const cPhone = cleanDigits(memberStr);
+            if (cPhone && cPhone.slice(-10) === phone.slice(-10)) coreRole = designation;
+            coreTeamList.push({ designation, roles: roles || 'Executive Member', memberStr: memberStr || 'Vacant' });
+          }
+        }
+
+        if (coreTeamList.length === 0) {
+          const defaultTeam = [
+            { designation: 'President', roles: 'Overall Governance', memberStr: 'Thounaojam Ibohal: 9862581747' },
+            { designation: 'General Secretary', roles: 'Operations', memberStr: 'Keisham Premkumar: 9856271310' },
+            { designation: 'Treasurer', roles: 'Finance & Accounts', memberStr: 'Pukhrambam Hiteshore Singh: 9862973977' },
+            { designation: 'IT Coordinator', roles: 'Digital Portal & Records', memberStr: 'Hiteshore Official: 9731399725' }
+          ];
+          defaultTeam.forEach(dt => {
+            const cPhone = cleanDigits(dt.memberStr);
+            if (cPhone && cPhone.slice(-10) === phone.slice(-10)) coreRole = dt.designation;
+            coreTeamList.push(dt);
+          });
         }
 
         document.getElementById('member-name').textContent = member.name;
@@ -177,14 +234,54 @@
         document.getElementById('kpi-total-amount').textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
         document.getElementById('kpi-categories').textContent = new Set(userContributions.map(c => c.categoryName)).size;
         document.getElementById('kpi-transactions').textContent = userContributions.length;
+        document.getElementById('contrib-count-badge').textContent = `${userContributions.length} Records`;
 
-        const tbody = document.getElementById('contrib-table-body');
-        tbody.innerHTML = '';
+        const cardsContainer = document.getElementById('contrib-cards-container');
+        cardsContainer.innerHTML = '';
         userContributions.forEach(c => {
-          const tr = document.createElement('tr');
-          tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
-          tr.innerHTML = `<td class="py-3 px-4 font-mono">${c.dateStr}</td><td class="py-3 px-4 font-bold">${c.categoryName}</td><td class="py-3 px-4">${c.frequency}</td><td class="py-3 px-4 font-extrabold">₹${c.amount}</td><td class="py-3 px-4 text-center"><button onclick="openReceipt('${c.id}', '${c.categoryName}', ${c.amount})" class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">📄 Receipt</button></td>`;
-          tbody.appendChild(tr);
+          const card = document.createElement('div');
+          card.className = "w-[280px] sm:w-[310px] flex-shrink-0 bg-white rounded-3xl border border-slate-100 p-5 shadow-lg shadow-slate-200/50 flex flex-col justify-between space-y-4 hover:shadow-xl transition-all";
+          const badgeBg = c.frequency.toLowerCase().includes('monthly') ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          card.innerHTML = `
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${badgeBg}">${c.frequency}</span>
+                <span class="text-xs font-mono font-bold text-slate-400">#${c.id}</span>
+              </div>
+              <div>
+                <div class="text-2xl font-extrabold text-slate-900">₹${c.amount.toLocaleString('en-IN')}</div>
+                <div class="text-xs font-bold text-slate-800 mt-1 line-clamp-1">${c.categoryName}</div>
+              </div>
+            </div>
+            <div class="space-y-2 text-xs text-slate-600 pt-3 border-t">
+              <div>📅 ${c.dateStr}</div>
+              <div>💳 Mode: ${c.paymentVia}</div>
+              ${c.remarks ? `<div class="text-[11px] text-slate-500 italic">📝 ${c.remarks}</div>` : ''}
+            </div>
+            <button onclick="openReceipt('${c.id}', '${encodeURIComponent(c.categoryName)}', ${c.amount}, '${encodeURIComponent(c.dateStr)}', '${encodeURIComponent(c.paymentVia)}')" class="w-full py-2.5 px-4 rounded-full font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+              📄 View Official Receipt
+            </button>
+          `;
+          cardsContainer.appendChild(card);
+        });
+
+        const cGrid = document.getElementById('core-team-grid');
+        cGrid.innerHTML = '';
+        coreTeamList.forEach(t => {
+          const card = document.createElement('div');
+          const isVacant = t.memberStr === 'Vacant' || !t.memberStr;
+          card.className = "bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2 shadow-sm flex flex-col justify-between";
+          card.innerHTML = `
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-200">${t.designation}</span>
+                <span class="text-[10px] font-bold ${isVacant ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'} px-2 py-0.5 rounded-full">${isVacant ? 'Vacant' : 'Active'}</span>
+              </div>
+              <p class="text-xs font-extrabold text-slate-900 pt-1">${t.memberStr}</p>
+              <p class="text-[11px] text-slate-500 line-clamp-2">${t.roles}</p>
+            </div>
+          `;
+          cGrid.appendChild(card);
         });
 
         document.getElementById('loading-state').classList.add('hidden');
@@ -195,14 +292,17 @@
       }
     }
 
-    function openReceipt(id, cat, amount) {
+    function openReceipt(id, catEnc, amount, dateEnc, modeEnc) {
       document.getElementById('rcpt-id').textContent = id.toUpperCase();
       document.getElementById('rcpt-member').textContent = document.getElementById('member-name').textContent;
-      document.getElementById('rcpt-category').textContent = cat;
-      document.getElementById('rcpt-amount').textContent = `₹${amount}`;
+      document.getElementById('rcpt-category').textContent = decodeURIComponent(catEnc);
+      document.getElementById('rcpt-date').textContent = decodeURIComponent(dateEnc);
+      document.getElementById('rcpt-mode').textContent = decodeURIComponent(modeEnc);
+      document.getElementById('rcpt-amount').textContent = `₹${amount.toLocaleString('en-IN')}`;
       document.getElementById('receipt-modal').classList.remove('hidden');
     }
     document.getElementById('close-receipt-btn').onclick = () => document.getElementById('receipt-modal').classList.add('hidden');
+    document.getElementById('close-receipt-btn-2').onclick = () => document.getElementById('receipt-modal').classList.add('hidden');
     document.addEventListener('DOMContentLoaded', initPortal);
   </script>
 </body>
