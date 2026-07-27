@@ -183,9 +183,9 @@
           <div>
             <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
               <span>💳</span>
-              <span>Last 10 Contributions History</span>
+              <span>Contribution History</span>
             </h2>
-            <p class="text-xs text-slate-500">Ordered by descending transaction date • Showing last 10 records</p>
+            <p class="text-xs text-slate-500">Ordered by descending transaction date • Swipe to browse records</p>
           </div>
           <span id="contrib-count-badge" class="text-xs font-bold bg-white text-slate-700 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-sm self-start sm:self-auto">
             0 Records
@@ -274,7 +274,6 @@
 
       <div class="flex items-center gap-2 pt-1">
         <button onclick="printReceiptFromModal()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 rounded-full transition text-center shadow-sm">🖨️ Print Receipt</button>
-        <button id="rcpt-open-pdf-btn" onclick="if(activeReceiptInvoiceUrl) window.open(activeReceiptInvoiceUrl, '_blank')" class="hidden px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-full transition border border-slate-200">Open PDF</button>
         <button id="close-receipt-btn-2" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-full transition border border-slate-200">Close</button>
       </div>
     </div>
@@ -465,9 +464,8 @@
           }
         }
 
-        // Sort by Descending order of Transaction date and keep Last 10 only
+        // Sort by Descending order of Transaction date
         userContributions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        userContributions = userContributions.slice(0, 10);
 
         // 3. Fetch Core Team
         let coreRole = null;
@@ -553,7 +551,9 @@
         document.getElementById('kpi-total-amount').textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
         document.getElementById('kpi-categories').textContent = totalCategories;
         document.getElementById('kpi-transactions').textContent = userContributions.length;
-        document.getElementById('contrib-count-badge').textContent = `${userContributions.length} Records`;
+
+        const displayContribs = userContributions.slice(0, 10);
+        document.getElementById('contrib-count-badge').textContent = `Showing last ${displayContribs.length} of ${userContributions.length} Records`;
 
         // Render Contributions
         const cardsContainer = document.getElementById('contrib-cards-container');
@@ -565,7 +565,7 @@
           noContribsEl.classList.remove('hidden');
           if (cardsTrack) cardsTrack.classList.add('hidden');
         } else {
-          userContributions.forEach(c => {
+          displayContribs.forEach(c => {
             const card = document.createElement('div');
             card.className = "w-[280px] sm:w-[310px] flex-shrink-0 bg-white rounded-3xl border border-slate-100 p-5 shadow-lg shadow-slate-200/50 flex flex-col justify-between space-y-4 hover:shadow-xl transition-all";
             
@@ -622,24 +622,101 @@
           });
         }
 
+        // Helper for Core Team Theme
+        function getRoleThemeStyle(designation, index) {
+          const des = (designation || '').toLowerCase();
+          if (des.includes('president') || des.includes('chair')) {
+            return {
+              banner: 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600',
+              badge: 'bg-amber-100 text-amber-900 border-amber-300',
+              phoneBtn: 'text-amber-800 bg-amber-50 border-amber-200 hover:bg-amber-100',
+              shadow: 'shadow-xl shadow-amber-500/10 hover:shadow-2xl hover:shadow-amber-500/20 border-amber-200/80',
+              titleColor: 'text-amber-800',
+              bgTint: 'bg-gradient-to-b from-amber-50/40 via-white to-white'
+            };
+          }
+          if (des.includes('secretary')) {
+            return {
+              banner: 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700',
+              badge: 'bg-blue-100 text-blue-900 border-blue-300',
+              phoneBtn: 'text-blue-800 bg-blue-50 border-blue-200 hover:bg-blue-100',
+              shadow: 'shadow-xl shadow-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/20 border-blue-200/80',
+              titleColor: 'text-blue-800',
+              bgTint: 'bg-gradient-to-b from-blue-50/40 via-white to-white'
+            };
+          }
+          if (des.includes('treasurer') || des.includes('finance')) {
+            return {
+              banner: 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700',
+              badge: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+              phoneBtn: 'text-emerald-800 bg-emerald-50 border-emerald-200 hover:bg-emerald-100',
+              shadow: 'shadow-xl shadow-emerald-500/10 hover:shadow-2xl hover:shadow-emerald-500/20 border-emerald-200/80',
+              titleColor: 'text-emerald-800',
+              bgTint: 'bg-gradient-to-b from-emerald-50/40 via-white to-white'
+            };
+          }
+          const themes = [
+            {
+              banner: 'bg-gradient-to-r from-purple-600 via-violet-600 to-fuchsia-600',
+              badge: 'bg-purple-100 text-purple-900 border-purple-300',
+              phoneBtn: 'text-purple-800 bg-purple-50 border-purple-200 hover:bg-purple-100',
+              shadow: 'shadow-xl shadow-purple-500/10 hover:shadow-2xl hover:shadow-purple-500/20 border-purple-200/80',
+              titleColor: 'text-purple-800',
+              bgTint: 'bg-gradient-to-b from-purple-50/40 via-white to-white'
+            },
+            {
+              banner: 'bg-gradient-to-r from-rose-500 via-pink-600 to-rose-600',
+              badge: 'bg-rose-100 text-rose-900 border-rose-300',
+              phoneBtn: 'text-rose-800 bg-rose-50 border-rose-200 hover:bg-rose-100',
+              shadow: 'shadow-xl shadow-rose-500/10 hover:shadow-2xl hover:shadow-rose-500/20 border-rose-200/80',
+              titleColor: 'text-rose-800',
+              bgTint: 'bg-gradient-to-b from-rose-50/40 via-white to-white'
+            }
+          ];
+          return themes[index % themes.length];
+        }
+
         // Render Core Team
         const container = document.getElementById('core-team-grid');
         container.innerHTML = '';
-        coreTeamList.forEach(t => {
+        coreTeamList.forEach((t, idx) => {
           const card = document.createElement('div');
           const isVacant = t.memberStr === 'Vacant' || !t.memberStr;
-          card.className = "bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2 shadow-sm flex flex-col justify-between";
-          
+          const theme = getRoleThemeStyle(t.designation, idx);
+          const phoneMatch = t.memberStr ? cleanDigits(t.memberStr) : '';
+
+          card.className = `rounded-3xl border ${theme.shadow} ${theme.bgTint} overflow-hidden flex flex-col justify-between transition-all duration-300 group hover:-translate-y-1 ${
+            isVacant ? 'opacity-60 bg-slate-50 border-dashed' : ''
+          }`;
+
           card.innerHTML = `
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-200">${t.designation}</span>
-                <span class="text-[10px] font-bold ${isVacant ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'} px-2 py-0.5 rounded-full">
-                  ${isVacant ? 'Vacant' : 'Active'}
-                </span>
+            <div class="w-full h-2.5 ${theme.banner}"></div>
+            <div class="p-5 w-full flex flex-col justify-between flex-1 space-y-3">
+              <div class="space-y-2 w-full">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${theme.badge}">${t.designation}</span>
+                  <span class="text-[10px] font-bold ${isVacant ? 'text-amber-700 bg-amber-50 border border-amber-200' : 'text-emerald-700 bg-emerald-50 border border-emerald-200'} px-2 py-0.5 rounded-full">
+                    ${isVacant ? 'Vacant' : 'Active'}
+                  </span>
+                </div>
+                <p class="text-sm font-extrabold text-slate-900 pt-1">${t.memberStr}</p>
               </div>
-              <p class="text-xs font-extrabold text-slate-900 pt-1">${t.memberStr}</p>
-              <p class="text-[11px] text-slate-500 line-clamp-2">${t.roles}</p>
+
+              ${phoneMatch && !isVacant ? `
+                <div>
+                  <a href="tel:${phoneMatch}" class="inline-flex items-center gap-1.5 text-xs font-bold ${theme.phoneBtn} px-3.5 py-1 rounded-full transition shadow-sm">
+                    <span>📞</span>
+                    <span>${phoneMatch}</span>
+                  </a>
+                </div>
+              ` : ''}
+
+              ${t.roles ? `
+                <div class="text-[11px] text-slate-600 text-left pt-2.5 border-t border-slate-100/80 w-full mt-auto line-clamp-2 leading-relaxed font-medium">
+                  <strong class="font-bold block mb-0.5 ${theme.titleColor}">Responsibilities:</strong>
+                  ${t.roles}
+                </div>
+              ` : ''}
             </div>
           `;
           container.appendChild(card);
@@ -678,15 +755,6 @@
       document.getElementById('rcpt-date').textContent = date;
       document.getElementById('rcpt-mode').textContent = mode;
       document.getElementById('rcpt-amount').textContent = `₹${amount.toLocaleString('en-IN')}`;
-
-      const openPdfBtn = document.getElementById('rcpt-open-pdf-btn');
-      if (openPdfBtn) {
-        if (activeReceiptInvoiceUrl && activeReceiptInvoiceUrl.startsWith('http')) {
-          openPdfBtn.classList.remove('hidden');
-        } else {
-          openPdfBtn.classList.add('hidden');
-        }
-      }
 
       document.getElementById('receipt-modal').classList.remove('hidden');
     }
