@@ -261,6 +261,7 @@
     }
     .cards-track::-webkit-scrollbar { display: none; }
     .cards-row { display: flex; gap: 14px; width: max-content; }
+    /* last card gets a right padding so it rests flush at the scroll end */
     .cards-row::after { content: ''; display: block; width: 2px; flex-shrink: 0; }
 
     /* Contribution card */
@@ -318,8 +319,6 @@
     .btn-ghost:hover { background: var(--hairline-soft); }
     .btn-yellow { background: var(--yellow); color: var(--ink); }
     .btn-yellow:hover { background: var(--yellow-deep); }
-    .btn-receipt { background: #4361ee; color: #fff; }
-    .btn-receipt:hover { background: #3a56dc; }
 
     .no-contribs {
       text-align: center; padding: 32px 16px;
@@ -342,7 +341,6 @@
       border-radius: var(--r-xxl); padding: 14px 16px;
       box-shadow: 0 4px 18px -3px rgba(5,0,56,0.11), 0 1px 6px -1px rgba(5,0,56,0.07);
       transition: transform 0.18s, box-shadow 0.18s;
-      cursor: pointer;
       text-decoration: none; color: inherit;
     }
     .team-card:hover {
@@ -360,7 +358,7 @@
     .team-avatar img {
       position: absolute; inset: 0;
       width: 100%; height: 100%; object-fit: cover;
-      display: none;
+      display: none; /* shown via onload */
       z-index: 2;
     }
     .team-avatar .team-initials {
@@ -383,11 +381,11 @@
     }
     .team-phone-btn:hover { background: var(--yellow-light); border-color: var(--yellow-deep); }
 
-    /* ── RECEIPT MODAL (BOTTOM SHEET) ── */
+    /* ── RECEIPT MODAL ── */
     .modal-overlay {
       display: none; position: fixed; inset: 0; z-index: 50;
       background: rgba(5,0,56,0.5); backdrop-filter: blur(6px);
-      padding: 16px 16px 0 16px;
+      padding: 16px 16px 0 16px; /* Updated to touch the bottom */
       align-items: flex-end; justify-content: center;
     }
     .modal-overlay.open { display: flex; }
@@ -451,74 +449,6 @@
 
     .modal-actions { display: flex; gap: 10px; }
 
-    /* ── ID CARD POPUP MODAL (CENTERED) ── */
-    .id-modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 60;
-      background: rgba(5,0,56,0.6); backdrop-filter: blur(8px);
-      padding: 20px; align-items: center; justify-content: center;
-    }
-    .id-modal-overlay.open { display: flex; }
-    
-    .id-card-container {
-      background: #ffffff; width: 100%; max-width: 340px;
-      border-radius: 28px; box-shadow: 0 20px 50px -10px rgba(5,0,56,0.3);
-      overflow: hidden; position: relative; animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      color: var(--ink); border: 1px solid var(--hairline);
-    }
-    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-    .id-card-top-section {
-      background: var(--surface); position: relative; height: 210px; overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-      border-bottom: 1px solid var(--hairline-soft);
-    }
-    .id-card-photo {
-      width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0;
-    }
-    .id-card-photo-fallback {
-      font-size: 64px; color: var(--ink-muted); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: var(--surface);
-    }
-    .id-card-close-x {
-      position: absolute; top: 14px; right: 14px; z-index: 10;
-      width: 32px; height: 32px; border-radius: var(--r-full);
-      background: rgba(255,255,255,0.85); backdrop-filter: blur(4px);
-      border: 1px solid var(--hairline); display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 14px; font-weight: 700; color: var(--ink);
-    }
-    .id-card-brand-overlay {
-      position: absolute; bottom: 12px; left: 14px; z-index: 5;
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,0.9); backdrop-filter: blur(6px);
-      padding: 6px 12px; border-radius: var(--r-full); border: 1px solid var(--hairline);
-    }
-    .id-card-brand-logo { width: 20px; height: 20px; background: var(--yellow); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; }
-    .id-card-brand-text { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink); }
-
-    .id-card-content { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-    .id-card-name { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--ink); text-align: center; line-height: 1.2; letter-spacing: -0.3px; }
-    .id-card-desig-wrap { display: flex; justify-content: center; }
-    .id-card-desig-badge {
-      background: var(--ink); color: #fff; font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.6px; padding: 5px 16px; border-radius: var(--r-full);
-    }
-    
-    .id-card-details {
-      background: var(--surface); border-radius: var(--r-xl); padding: 12px 16px;
-      display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--hairline-soft);
-    }
-    .id-card-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
-    .id-card-row-label { color: var(--ink-muted); font-weight: 500; }
-    .id-card-row-val { color: var(--ink); font-weight: 600; font-family: monospace; }
-
-    .id-card-barcode-section {
-      display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 4px;
-    }
-    .id-card-barcode {
-      width: 80%; height: 32px; background: repeating-linear-gradient(90deg, #050038, #050038 2px, transparent 2px, transparent 4px, #050038 4px, #050038 5px, transparent 5px, transparent 8px);
-      opacity: 0.85;
-    }
-    .id-card-idnum { font-size: 9px; font-family: monospace; color: var(--ink-muted); letter-spacing: 1px; }
-
     /* ── FOOTER ── */
     footer {
       background: var(--footer-bg); color: rgba(255,255,255,0.7);
@@ -532,8 +462,8 @@
     /* ── PRINT ── */
     @media print {
       body * { visibility: hidden; }
-      #receipt-modal, #receipt-modal *, #id-card-modal, #id-card-modal * { visibility: visible; }
-      #receipt-modal, #id-card-modal { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+      #receipt-modal, #receipt-modal * { visibility: visible; }
+      #receipt-modal { position: absolute; left: 0; top: 0; width: 100%; background: white; }
     }
 
     /* ── UTILITIES ── */
@@ -654,7 +584,7 @@
     </div>
   </main>
 
-  <!-- RECEIPT MODAL (BOTTOM SHEET) -->
+  <!-- RECEIPT MODAL (bottom sheet) -->
   <div id="receipt-modal" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-handle"><div class="modal-handle-bar"></div></div>
@@ -702,48 +632,6 @@
     </div>
   </div>
 
-  <!-- ID CARD MODAL (CENTERED POPUP) -->
-  <div id="id-card-modal" class="id-modal-overlay">
-    <div class="id-card-container">
-      <button class="id-card-close-x" id="close-id-modal-btn">✕</button>
-      <div class="id-card-top-section">
-        <div class="id-card-photo-fallback" id="id-card-fallback">👤</div>
-        <img id="id-card-img" class="id-card-photo" src="" alt="Team Member" style="display:none;" />
-        <div class="id-card-brand-overlay">
-          <div class="id-card-brand-logo">🏛️</div>
-          <div class="id-card-brand-text">KACM Official</div>
-        </div>
-      </div>
-      <div class="id-card-content">
-        <div>
-          <div class="id-card-name" id="id-card-name">—</div>
-          <div style="height: 6px;"></div>
-          <div class="id-card-desig-wrap">
-            <span class="id-card-desig-badge" id="id-card-desig">—</span>
-          </div>
-        </div>
-        <div class="id-card-details">
-          <div class="id-card-row">
-            <span class="id-card-row-label">Role</span>
-            <span class="id-card-row-val" id="id-card-role-val" style="font-family:inherit; max-width:60%; text-align:right;">—</span>
-          </div>
-          <div class="id-card-row">
-            <span class="id-card-row-label">Email</span>
-            <span class="id-card-row-val" id="id-card-email-val">—</span>
-          </div>
-          <div class="id-card-row">
-            <span class="id-card-row-label">Phone</span>
-            <span class="id-card-row-val" id="id-card-phone-val">—</span>
-          </div>
-        </div>
-        <div class="id-card-barcode-section">
-          <div class="id-card-barcode"></div>
-          <div class="id-card-idnum" id="id-card-id-num">ID: KACM-OFFICIAL-001</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- FOOTER -->
   <footer>
     <strong>Keishamthong Apunba Chaokhat Marup</strong> (KACM)<br>
@@ -753,7 +641,6 @@
 <script>
   const SPREADSHEET_ID = "1yqBz_fRFmtvT8LhIyltwDv7w1ePgNtI-RqrAYWs_kLk";
   let activeReceiptInvoiceUrl = '';
-  let coreTeamGlobalList = [];
 
   async function fetchSheetData(sheetName) {
     const cacheBuster = Date.now();
@@ -803,6 +690,7 @@
     };
   }
 
+  // Team colour themes (Miro palette)
   function getTeamTheme(designation, index) {
     const d = (designation || '').toLowerCase();
     if (d.includes('president') || d.includes('chair')) return {
@@ -900,9 +788,9 @@
       // 3. Core Team
       const coreRows = await fetchSheetData('Core Team');
       let coreRole = null;
+      const coreTeamList = [];
       const allFormMembers = memberRows.map(r => {
         if (!r?.c) return null;
-        const fmEmail = String(r.c[1]?.v || '').trim();
         const fmName = String(r.c[2]?.v || '').trim();
         const fmPhone = cleanDigits(r.c[4]?.v ?? r.c[3]?.v ?? '');
         let fmPhoto = String(r.c[5]?.v || '').trim();
@@ -915,10 +803,9 @@
             if (fileId) fmPhoto = `https://lh3.googleusercontent.com/d/${fileId}=s400`;
           }
         }
-        return { email: fmEmail, name: fmName, phone: fmPhone, photoUrl: fmPhoto };
+        return { name: fmName, phone: fmPhone, photoUrl: fmPhoto };
       }).filter(Boolean);
 
-      coreTeamGlobalList = [];
       for (const tr of coreRows) {
         if (!tr?.c) continue;
         const cell0 = String(tr.c[0]?.v || ''); const cell1 = String(tr.c[1]?.v || '');
@@ -929,35 +816,18 @@
         const cPhone = cleanDigits(cell3);
         const cName  = cell3 ? cell3.split(':')[0].trim() : 'Vacant';
         if (cPhone && cPhone.slice(-10) === phone.slice(-10)) coreRole = designation;
-
         let photoUrl = '';
-        let emailVal = '—';
-        let matchedPhone = cPhone || '—';
-
         if (cell3 && cell3 !== 'Vacant') {
           const matched = allFormMembers.find(fm =>
             (fm.phone && cPhone && fm.phone.slice(-10) === cPhone.slice(-10)) ||
             (fm.name && cName && (cell3.toLowerCase().includes(fm.name.toLowerCase()) || fm.name.toLowerCase().includes(cName.toLowerCase())))
           );
-          if (matched) {
-            if (matched.photoUrl) photoUrl = matched.photoUrl;
-            if (matched.email) emailVal = matched.email;
-            if (matched.phone) matchedPhone = matched.phone;
-          }
+          if (matched?.photoUrl) photoUrl = matched.photoUrl;
         }
-
-        coreTeamGlobalList.push({
-          designation,
-          roles: cell2 || 'Executive Office Bearer',
-          memberStr: cell3 || 'Vacant',
-          nameClean: cName,
-          phone: matchedPhone,
-          email: emailVal,
-          photoUrl
-        });
+        coreTeamList.push({ designation, roles: cell2 || 'Executive Office Bearer', memberStr: cell3 || 'Vacant', photoUrl });
       }
 
-      if (coreTeamGlobalList.length === 0) {
+      if (coreTeamList.length === 0) {
         [
           { designation:'President', roles:'Overall Administration & Governance', memberStr:'Thounaojam Ibohal: 9862581747' },
           { designation:'General Secretary', roles:'Operations & Community Affairs', memberStr:'Keisham Premkumar: 9856271310' },
@@ -966,16 +836,7 @@
         ].forEach(dt => {
           const cp = cleanDigits(dt.memberStr);
           if (cp && cp.slice(-10) === phone.slice(-10)) coreRole = dt.designation;
-          const cName = dt.memberStr.substring(0, dt.memberStr.lastIndexOf(':')).trim();
-          coreTeamGlobalList.push({
-            designation: dt.designation,
-            roles: dt.roles,
-            memberStr: dt.memberStr,
-            nameClean: cName,
-            phone: cp,
-            email: '—',
-            photoUrl: ''
-          });
+          coreTeamList.push({ ...dt, photoUrl: '' });
         });
       }
 
@@ -1013,7 +874,7 @@
       const display = userContributions.slice(0, 10);
       document.getElementById('contrib-count-badge').textContent = `${display.length} of ${userContributions.length}`;
 
-      // Contribution cards
+      // Contribution cards (Updated to Plain White)
       const cardsContainer = document.getElementById('contrib-cards-container');
       cardsContainer.innerHTML = '';
       if (userContributions.length === 0) {
@@ -1026,6 +887,8 @@
           
           const card = document.createElement('div');
           card.className = `contrib-card ${freqClass}`;
+          
+          // Added onclick directly to the card
           card.setAttribute('onclick', `openReceipt('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')`);
 
           card.innerHTML = `
@@ -1043,38 +906,38 @@
               ${c.remarks ? `<div class="contrib-remarks">📝 ${c.remarks}</div>` : ''}
             </div>
             <div class="contrib-actions">
-              <button class="btn btn-receipt" style="flex:1;" onclick="event.stopPropagation(); handlePrintClick('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">🖨️ Receipt</button>
+              <!-- event.stopPropagation() prevents the card click event from firing when just printing -->
+              <button class="btn btn-ghost" style="flex:1;" onclick="event.stopPropagation(); handlePrintClick('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">🖨️ Receipt</button>
             </div>`;
           cardsContainer.appendChild(card);
         });
       }
 
-      // Team grid with click handler to trigger ID Card popup
+      // Team grid
       const teamGrid = document.getElementById('core-team-grid');
       teamGrid.innerHTML = '';
-      coreTeamGlobalList.forEach((t, idx) => {
+      coreTeamList.forEach((t, idx) => {
         const theme = getTeamTheme(t.designation, idx);
         const isVacant = !t.memberStr || t.memberStr === 'Vacant';
-        const initials = t.nameClean && !isVacant ? t.nameClean.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
-        
+        const nameClean = t.memberStr ? t.memberStr.substring(0, t.memberStr.lastIndexOf(':')).trim() || t.memberStr : 'Vacant';
+        const initials = nameClean && !isVacant ? nameClean.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
+        const cPhone   = cleanDigits(t.memberStr);
         const card = document.createElement('div');
         card.className = `team-card${isVacant?' team-card-vacant':''}`;
         if (isVacant) card.style.opacity = '0.55';
-        card.setAttribute('onclick', `openIdCard(${idx})`);
-
         card.innerHTML = `
           <div class="team-avatar" style="background:${theme.avatarBg};">
             <span class="team-initials" style="color:${theme.initColor};">${initials}</span>
-            ${t.photoUrl ? `<img src="${t.photoUrl}" alt="${t.nameClean}" onload="this.style.display='block';" onerror="this.style.display='none';" />` : ''}
+            ${t.photoUrl ? `<img src="${t.photoUrl}" alt="${nameClean}" onload="this.style.display='block';" onerror="this.style.display='none';" />` : ''}
           </div>
           <div class="team-info">
-            <div class="team-name">${t.nameClean}</div>
+            <div class="team-name">${nameClean}</div>
             <div class="team-desig-row">
               <span class="team-desig" style="${theme.desig}">${t.designation}</span>
             </div>
             <div class="team-roles">${t.roles}</div>
           </div>
-          ${t.phone && !isVacant ? `<a href="tel:${t.phone}" class="team-phone-btn" onclick="event.stopPropagation();" title="Call">📞</a>` : ''}`;
+          ${cPhone && !isVacant ? `<a href="tel:${cPhone}" class="team-phone-btn" title="Call">📞</a>` : ''}`;
         teamGrid.appendChild(card);
       });
 
@@ -1085,47 +948,10 @@
     } catch (err) {
       console.error(err);
       loadingEl.classList.add('hidden');
-      errorEl.classList.add('hidden'); // wait keep error state
       errorEl.classList.remove('hidden');
       errorMsgEl.textContent = `Could not load data. Error: ${err.message}`;
     }
   }
-
-  // ID Card popup logic
-  function openIdCard(index) {
-    const member = coreTeamGlobalList[index];
-    if (!member) return;
-
-    document.getElementById('id-card-name').textContent = member.nameClean;
-    document.getElementById('id-card-desig').textContent = member.designation;
-    document.getElementById('id-card-role-val').textContent = member.roles;
-    document.getElementById('id-card-email-val').textContent = member.email;
-    document.getElementById('id-card-phone-val').textContent = member.phone !== '—' ? `+91 ${member.phone}` : '—';
-    document.getElementById('id-card-id-num').textContent = `ID: KACM-OFFICIAL-${String(index+1).padStart(3, '0')}`;
-
-    const imgEl = document.getElementById('id-card-img');
-    const fallbackEl = document.getElementById('id-card-fallback');
-    
-    if (member.photoUrl?.startsWith('http')) {
-      imgEl.src = member.photoUrl;
-      imgEl.onload = () => { imgEl.style.display = 'block'; fallbackEl.style.display = 'none'; };
-      imgEl.onerror = () => { imgEl.style.display = 'none'; fallbackEl.style.display = 'flex'; };
-    } else {
-      imgEl.style.display = 'none';
-      fallbackEl.style.display = 'flex';
-    }
-
-    document.getElementById('id-card-modal').classList.add('open');
-  }
-
-  function closeIdModal() {
-    document.getElementById('id-card-modal').classList.remove('open');
-  }
-
-  document.getElementById('close-id-modal-btn').onclick = closeIdModal;
-  document.getElementById('id-card-modal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeIdModal();
-  });
 
   function handlePrintClick(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
     const inv = decodeURIComponent(urlEnc || '');
