@@ -1,0 +1,129 @@
+
+<!--
+  ReceiptEmailBody.html
+  Rendered by buildReceiptEmailHtml() in SendEmailReceipt.gs via
+  HtmlService templating — every <?= data.xxx ?> below comes from
+  buildReceiptContext() in that file.
+
+  Kept deliberately email-safe: inline styles only (no <style> block,
+  since many clients strip it), table-based layout (no flexbox/grid),
+  web-safe fonts, and emoji instead of icon fonts (icon fonts/SVG
+  sprites get stripped by most email clients; emoji render natively
+  everywhere with zero external requests).
+
+  To restyle: the colors are all inline hex values below — search for
+  "#1d4ed8" (blue) and "#059669" (green) to change the header gradient,
+  or any other hex code to change that specific element.
+-->
+<div style="background-color:#eef1f5; padding:24px 12px; font-family:Arial, Helvetica, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:0 auto; background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.08);">
+
+    <!-- Header -->
+    <tr>
+      <td style="background-color:#1d4ed8; background-image:linear-gradient(135deg, #1d4ed8 0%, #059669 100%); padding:28px 32px;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-size:26px; padding-right:10px; vertical-align:middle;">🪔</td>
+            <td style="vertical-align:middle;">
+              <div style="color:#ffffff; font-size:20px; font-weight:bold; line-height:1.3;"><?= data.orgName ?></div>
+              <div style="color:#e5f0ff; font-size:13px; margin-top:2px;">Contribution Receipt</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Greeting -->
+    <tr>
+      <td style="padding:28px 32px 8px 32px;">
+        <p style="margin:0 0 6px 0; font-size:15px; color:#1f2937;">
+          Hello <strong><?= data.memberName ?></strong>,
+        </p>
+        <p style="margin:0; font-size:14px; color:#4b5563; line-height:1.5;">
+          A new contribution has been successfully recorded in the <strong><?= data.orgName ?></strong> Contribution Management System.
+        </p>
+      </td>
+    </tr>
+
+    <!-- Highlight cards: Amount / Category / Period -->
+    <tr>
+      <td style="padding:20px 32px 4px 32px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td width="33%" style="background-color:#eff6ff; border-radius:10px; padding:14px 10px; text-align:center;">
+              <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.03em;">💰 Contribution</div>
+              <div style="font-size:19px; font-weight:bold; color:#1d4ed8; margin-top:4px;">₹ <?= data.amount ?></div>
+            </td>
+            <td width="3%"></td>
+            <td width="33%" style="background-color:#ecfdf5; border-radius:10px; padding:14px 10px; text-align:center;">
+              <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.03em;">🏷️ Category</div>
+              <div style="font-size:16px; font-weight:bold; color:#059669; margin-top:4px;"><?= data.categoryName ?></div>
+            </td>
+            <td width="3%"></td>
+            <td width="33%" style="background-color:#fff7ed; border-radius:10px; padding:14px 10px; text-align:center;">
+              <div style="font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.03em;">📅 Period</div>
+              <div style="font-size:16px; font-weight:bold; color:#c2410c; margin-top:4px;"><?= data.period ? data.period : '—' ?></div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Details table -->
+    <tr>
+      <td style="padding:20px 32px 4px 32px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;">
+          <tr style="background-color:#f9fafb;">
+            <td style="padding:11px 14px; font-size:13px; color:#374151; font-weight:bold; width:44%;">🔁 Contribution Frequency</td>
+            <td style="padding:11px 14px; font-size:13px; color:#111827;"><?= data.frequency ?></td>
+          </tr>
+          <tr>
+            <td style="padding:11px 14px; font-size:13px; color:#374151; font-weight:bold; border-top:1px solid #e5e7eb;">🗓️ Transaction Date</td>
+            <td style="padding:11px 14px; font-size:13px; color:#111827; border-top:1px solid #e5e7eb;"><?= data.transactionDate ?></td>
+          </tr>
+          <tr style="background-color:#f9fafb;">
+            <td style="padding:11px 14px; font-size:13px; color:#374151; font-weight:bold; border-top:1px solid #e5e7eb;">💳 Payment Method</td>
+            <td style="padding:11px 14px; font-size:13px; color:#111827; border-top:1px solid #e5e7eb;"><?= data.paymentMethod ?></td>
+          </tr>
+          <tr>
+            <td style="padding:11px 14px; font-size:13px; color:#374151; font-weight:bold; border-top:1px solid #e5e7eb;">👤 Recorded By</td>
+            <td style="padding:11px 14px; font-size:13px; color:#1d4ed8; border-top:1px solid #e5e7eb;"><?= data.recordedBy ?></td>
+          </tr>
+          <tr style="background-color:#f9fafb;">
+            <td style="padding:11px 14px; font-size:13px; color:#374151; font-weight:bold; border-top:1px solid #e5e7eb;">📝 Remarks</td>
+            <td style="padding:11px 14px; font-size:13px; color:#111827; border-top:1px solid #e5e7eb;"><?= data.remarks ? data.remarks : '—' ?></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Download Invoice button (only shown if an InvoiceUrl exists) -->
+    <? if (data.invoiceUrl) { ?>
+    <tr>
+      <td style="padding:26px 32px; text-align:center;">
+        <a href="<?= data.invoiceUrl ?>" target="_blank"
+           style="display:inline-block; background-color:#1d4ed8; color:#ffffff; text-decoration:none; font-size:14px; font-weight:bold; padding:12px 28px; border-radius:8px;">
+          📄&nbsp; Download Invoice
+        </a>
+      </td>
+    </tr>
+    <? } ?>
+
+    <!-- Footer -->
+    <tr>
+      <td style="padding:20px 32px; border-top:1px solid #e5e7eb; background-color:#fafafa;">
+        <div style="font-size:12px; color:#6b7280; font-weight:bold;"><?= data.orgName ?> Contribution Management System</div>
+        <div style="font-size:11px; color:#9ca3af; margin-top:6px; line-height:1.5;">
+          This is an automatically generated email confirming that a contribution has been successfully recorded.
+        </div>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding:14px 32px; text-align:center; background-color:#f3f4f6;">
+        <div style="font-size:11px; color:#9ca3af;">© 2026 <?= data.orgName ?> · All Rights Reserved</div>
+      </td>
+    </tr>
+
+  </table>
+</div>
