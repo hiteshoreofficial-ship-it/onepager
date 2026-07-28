@@ -1,0 +1,942 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <title>KACM Member Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens (Miro-inspired) ───────────────────────── */
+    :root {
+      --ink:         #050038;
+      --ink-muted:   #555a6a;
+      --canvas:      #ffffff;
+      --surface:     #f7f8fa;
+      --hairline:    #e0e2e8;
+      --hairline-soft: #eef0f3;
+
+      --yellow:      #ffd02f;
+      --yellow-deep: #fcb900;
+      --yellow-light:#fff4c4;
+      --yellow-bg:   #fff8e0;
+
+      --blue:        #4262ff;
+      --blue-light:  #5b76fe;
+      --blue-pressed:#2a41b6;
+      --blue-bg:     #f0f3ff;
+
+      --teal:        #0fbcb0;
+      --teal-light:  #c3faf5;
+      --teal-dark:   #187574;
+
+      --coral:       #ff9999;
+      --coral-light: #ffc6c6;
+      --coral-dark:  #600000;
+
+      --rose:        #ffd8f4;
+      --rose-light:  #fde0f0;
+
+      --success:     #00b473;
+      --success-bg:  #d0f5e9;
+
+      --footer-bg:   #1c1c1e;
+
+      --r-sm: 6px;
+      --r-md: 8px;
+      --r-lg: 12px;
+      --r-xl: 16px;
+      --r-xxl:20px;
+      --r-xxxl:28px;
+      --r-feat:32px;
+      --r-full:9999px;
+
+      --shadow-card: 0 4px 20px -2px rgba(5,0,56,0.08), 0 1px 4px -1px rgba(5,0,56,0.04);
+      --shadow-elevated: 0 12px 40px -4px rgba(5,0,56,0.12), 0 2px 8px -2px rgba(5,0,56,0.06);
+
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body:    'DM Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--surface);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: var(--r-full); }
+
+    /* ── TOP NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 40;
+      background: var(--canvas);
+      border-bottom: 1px solid var(--hairline-soft);
+      padding: 0 16px;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-logo {
+      width: 38px; height: 38px; border-radius: var(--r-lg);
+      background: var(--yellow);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: var(--ink);
+      flex-shrink: 0;
+    }
+    .nav-name {
+      font-size: 15px; font-weight: 700; color: var(--ink);
+      line-height: 1.2; letter-spacing: -0.3px;
+    }
+    .nav-sub { font-size: 11px; color: var(--ink-muted); font-weight: 500; }
+    .nav-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--yellow-bg); color: var(--ink); border: 1px solid var(--yellow-deep);
+      font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+      padding: 3px 9px; border-radius: var(--r-full);
+      white-space: nowrap;
+    }
+
+    /* ── MAIN ── */
+    main {
+      flex: 1; max-width: 600px; width: 100%;
+      margin: 0 auto; padding: 20px 16px 32px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    /* ── STATES ── */
+    .state-card {
+      background: var(--canvas); border-radius: var(--r-feat);
+      border: 1px solid var(--hairline); padding: 48px 24px;
+      text-align: center; display: flex; flex-direction: column;
+      align-items: center; gap: 16px;
+    }
+    .state-icon {
+      width: 56px; height: 56px; border-radius: var(--r-full);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+    }
+    .state-icon.loading { background: var(--blue-bg); }
+    .state-icon.error   { background: var(--coral-light); }
+    .spinner {
+      width: 28px; height: 28px; border: 3px solid var(--hairline);
+      border-top-color: var(--blue); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .state-title { font-size: 18px; font-weight: 700; color: var(--ink); }
+    .state-body { font-size: 13px; color: var(--ink-muted); line-height: 1.5; max-width: 280px; }
+
+    /* ── HERO PROFILE CARD ── */
+    .profile-card {
+      background: var(--ink);
+      border-radius: var(--r-feat);
+      padding: 24px;
+      color: #fff;
+      position: relative; overflow: hidden;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: var(--yellow);
+      border-radius: 50%; opacity: 0.08;
+      pointer-events: none;
+    }
+    .profile-card::after {
+      content: '';
+      position: absolute; bottom: -60px; left: 20px;
+      width: 140px; height: 140px;
+      background: var(--blue-light);
+      border-radius: 50%; opacity: 0.1;
+      pointer-events: none;
+    }
+    .profile-inner { position: relative; z-index: 1; }
+
+    .profile-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+      padding: 4px 10px; border-radius: var(--r-full);
+      border: 1px solid;
+    }
+    .tag-blue { background: rgba(66,98,255,0.2); border-color: rgba(91,118,254,0.35); color: #a0b0ff; }
+    .tag-yellow { background: rgba(255,208,47,0.15); border-color: rgba(252,185,0,0.3); color: var(--yellow); }
+
+    .profile-row { display: flex; align-items: flex-start; gap: 16px; }
+    .avatar-wrap {
+      width: 80px; height: 80px; flex-shrink: 0;
+      border-radius: var(--r-xl); overflow: hidden;
+      background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(255,255,255,0.15);
+      font-size: 32px;
+    }
+    .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .profile-name {
+      font-family: var(--font-display); font-size: 24px; font-weight: 700;
+      color: #fff; line-height: 1.15; letter-spacing: -0.5px;
+      margin-bottom: 10px;
+    }
+    .meta-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .meta-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--r-full); padding: 4px 10px;
+      font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.75);
+    }
+
+    /* ── KPI STRIP ── */
+    .kpi-strip {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .kpi-card {
+      background: var(--canvas); border-radius: var(--r-xxl);
+      border: 1px solid var(--hairline); padding: 14px 12px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .kpi-icon {
+      width: 28px; height: 28px; border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; margin-bottom: 4px;
+    }
+    .kpi-icon.yellow { background: var(--yellow-light); }
+    .kpi-icon.blue   { background: var(--blue-bg); }
+    .kpi-icon.teal   { background: var(--teal-light); }
+    .kpi-value { font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; line-height: 1; }
+    .kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-muted); }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px;
+    }
+    .section-title .icon {
+      width: 28px; height: 28px; border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .count-pill {
+      font-size: 11px; font-weight: 700; color: var(--ink-muted);
+      background: var(--surface); border: 1px solid var(--hairline);
+      padding: 3px 10px; border-radius: var(--r-full);
+    }
+
+    /* ── CONTRIBUTION SECTION ── */
+    .contrib-section {
+      background: var(--canvas); border-radius: var(--r-feat);
+      border: 1px solid var(--hairline); padding: 20px;
+    }
+    .swipe-hint {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 11px; font-weight: 600; color: var(--ink-muted);
+      margin-bottom: 12px;
+    }
+    .cards-track { overflow-x: auto; padding-bottom: 8px; }
+    .cards-row { display: flex; gap: 12px; width: max-content; }
+
+    /* Contribution card */
+    .contrib-card {
+      width: 260px; flex-shrink: 0;
+      background: var(--surface); border-radius: var(--r-xxxl);
+      border: 1px solid var(--hairline-soft);
+      padding: 18px; display: flex; flex-direction: column; gap: 14px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .contrib-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-elevated); }
+
+    .contrib-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .freq-pill {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      padding: 3px 9px; border-radius: var(--r-full); border: 1px solid;
+    }
+    .freq-pill.monthly { background: var(--blue-bg); border-color: rgba(66,98,255,0.2); color: var(--blue); }
+    .freq-pill.yearly  { background: var(--teal-light); border-color: rgba(15,188,176,0.3); color: var(--teal-dark); }
+    .freq-pill.onetime { background: var(--rose-light); border-color: rgba(255,216,244,0.8); color: #8b3370; }
+    .freq-pill.default { background: var(--surface); border-color: var(--hairline); color: var(--ink-muted); }
+    .contrib-id { font-size: 10px; font-family: monospace; color: var(--ink-muted); font-weight: 600; }
+
+    .contrib-amount { font-size: 28px; font-weight: 800; color: var(--ink); letter-spacing: -1px; line-height: 1; }
+    .contrib-cat { font-size: 12px; font-weight: 600; color: var(--ink-muted); margin-top: 4px; }
+
+    .contrib-meta { border-top: 1px solid var(--hairline-soft); padding-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+    .contrib-meta-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-muted); font-weight: 500; }
+    .contrib-meta-row strong { color: var(--ink); }
+    .contrib-remarks { font-size: 10px; color: var(--ink-muted); font-style: italic; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .contrib-actions { display: flex; gap: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font-family: var(--font-body); font-size: 12px; font-weight: 600;
+      border-radius: var(--r-full); padding: 8px 14px; border: none; cursor: pointer;
+      transition: background 0.15s, transform 0.1s; text-decoration: none;
+      white-space: nowrap; line-height: 1;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--ink); color: #fff; flex: 1; }
+    .btn-primary:hover { background: #2c2c34; }
+    .btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--hairline); }
+    .btn-ghost:hover { background: var(--hairline-soft); }
+    .btn-yellow { background: var(--yellow); color: var(--ink); }
+    .btn-yellow:hover { background: var(--yellow-deep); }
+
+    .no-contribs {
+      text-align: center; padding: 32px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .no-contribs-icon { font-size: 32px; }
+    .no-contribs-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .no-contribs-sub { font-size: 12px; color: var(--ink-muted); }
+
+    /* ── TEAM SECTION ── */
+    .team-section {
+      background: var(--canvas); border-radius: var(--r-feat);
+      border: 1px solid var(--hairline); padding: 20px;
+    }
+    .team-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+
+    .team-card {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface); border: 1px solid var(--hairline-soft);
+      border-radius: var(--r-xxl); padding: 14px 16px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      text-decoration: none; color: inherit;
+    }
+    .team-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
+    .team-avatar {
+      width: 48px; height: 48px; flex-shrink: 0;
+      border-radius: var(--r-lg); overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: #fff;
+      font-family: var(--font-body);
+    }
+    .team-avatar img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .team-info { flex: 1; min-width: 0; }
+    .team-name { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .team-desig-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .team-desig {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      padding: 2px 8px; border-radius: var(--r-full); border: 1px solid;
+    }
+    .team-roles { font-size: 11px; color: var(--ink-muted); font-weight: 500; margin-top: 3px; line-height: 1.35; }
+    .team-phone-btn {
+      flex-shrink: 0; width: 36px; height: 36px; border-radius: var(--r-full);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; border: 1px solid var(--hairline);
+      background: var(--canvas); text-decoration: none;
+      transition: background 0.15s;
+    }
+    .team-phone-btn:hover { background: var(--yellow-light); border-color: var(--yellow-deep); }
+
+    /* ── RECEIPT MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 50;
+      background: rgba(5,0,56,0.5); backdrop-filter: blur(6px);
+      padding: 16px; align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: var(--canvas); border-radius: var(--r-feat) var(--r-feat) 0 0;
+      width: 100%; max-width: 480px; padding: 0;
+      box-shadow: var(--shadow-elevated); overflow: hidden;
+      animation: slideUp 0.25s ease;
+      max-height: 90dvh; overflow-y: auto;
+    }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .modal-handle {
+      display: flex; justify-content: center; padding: 12px 0 0;
+    }
+    .modal-handle-bar {
+      width: 36px; height: 4px; background: var(--hairline); border-radius: var(--r-full);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--hairline-soft);
+    }
+    .modal-brand { display: flex; align-items: center; gap: 10px; }
+    .modal-logo {
+      width: 36px; height: 36px; border-radius: var(--r-lg);
+      background: var(--yellow); display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: var(--ink);
+    }
+    .modal-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .modal-sub { font-size: 11px; color: var(--ink-muted); }
+    .close-btn {
+      width: 32px; height: 32px; border-radius: var(--r-full);
+      background: var(--surface); border: 1px solid var(--hairline);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer; color: var(--ink-muted);
+      transition: background 0.15s;
+    }
+    .close-btn:hover { background: var(--hairline-soft); }
+
+    .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+    .receipt-rows {
+      background: var(--surface); border-radius: var(--r-xl);
+      border: 1px solid var(--hairline-soft); overflow: hidden;
+    }
+    .receipt-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 16px; border-bottom: 1px solid var(--hairline-soft);
+      font-size: 13px;
+    }
+    .receipt-row:last-child { border-bottom: none; }
+    .receipt-row-label { color: var(--ink-muted); font-weight: 500; }
+    .receipt-row-value { color: var(--ink); font-weight: 600; text-align: right; max-width: 60%; }
+    .receipt-amount-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; background: var(--yellow-bg); border-top: 1px solid var(--yellow-light);
+      font-size: 14px;
+    }
+    .receipt-amount-label { font-weight: 700; color: var(--ink); }
+    .receipt-amount-val { font-size: 24px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; }
+
+    .modal-actions { display: flex; gap: 10px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--footer-bg); color: rgba(255,255,255,0.7);
+      text-align: center; padding: 20px 16px;
+      font-size: 12px; font-weight: 500;
+      margin-top: auto;
+    }
+    footer strong { color: #fff; font-weight: 700; }
+    footer .footer-yellow { color: var(--yellow); font-weight: 700; }
+
+    /* ── PRINT ── */
+    @media print {
+      body * { visibility: hidden; }
+      #receipt-modal, #receipt-modal * { visibility: visible; }
+      #receipt-modal { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+    }
+
+    /* ── UTILITIES ── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="nav-brand">
+      <div class="nav-logo">🏛️</div>
+      <div>
+        <div class="nav-name">KACM Portal</div>
+        <div class="nav-sub">Keishamthong Apunba Chaokhat Marup</div>
+      </div>
+    </div>
+    <div class="nav-badge">✦ My KACM</div>
+  </header>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- LOADING -->
+    <div id="loading-state" class="state-card">
+      <div class="state-icon loading"><div class="spinner"></div></div>
+      <div class="state-title">Fetching your details…</div>
+      <div class="state-body">Loading live member data from the KACM register.</div>
+    </div>
+
+    <!-- ERROR -->
+    <div id="error-state" class="state-card hidden">
+      <div class="state-icon error">⚠️</div>
+      <div class="state-title" id="error-title">Member Not Found</div>
+      <div class="state-body" id="error-message">No phone number was provided in the URL.</div>
+    </div>
+
+    <!-- PORTAL CONTENT -->
+    <div id="portal-content" class="hidden" style="display:none; flex-direction:column; gap:16px;">
+
+      <!-- PROFILE HERO -->
+      <div class="profile-card">
+        <div class="profile-inner">
+          <div class="profile-tags">
+            <span class="tag tag-blue">🏛️ KACM Registered</span>
+            <span id="core-team-badge" class="tag tag-yellow hidden">⭐ <span id="core-team-role">Executive</span></span>
+          </div>
+          <div class="profile-row">
+            <div class="avatar-wrap" id="avatar-container">
+              <span id="avatar-fallback">👤</span>
+              <img id="avatar-img" src="" alt="Member Photo" />
+            </div>
+            <div>
+              <div class="profile-name" id="member-name">—</div>
+              <div class="meta-chips">
+                <span class="meta-chip">👤 <span id="gender-val">—</span></span>
+                <span class="meta-chip">📞 <span id="phone-val">—</span></span>
+                <span id="email-chip" class="meta-chip hidden">✉️ <span id="email-val">—</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI STRIP -->
+      <div class="kpi-strip">
+        <div class="kpi-card">
+          <div class="kpi-icon yellow">💰</div>
+          <div class="kpi-value" id="kpi-total-amount">₹0</div>
+          <div class="kpi-label">Total Paid</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon blue">🏷️</div>
+          <div class="kpi-value" id="kpi-categories">0</div>
+          <div class="kpi-label">Funds</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon teal">🔄</div>
+          <div class="kpi-value" id="kpi-transactions">0</div>
+          <div class="kpi-label">Receipts</div>
+        </div>
+      </div>
+
+      <!-- CONTRIBUTIONS -->
+      <div class="contrib-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="icon" style="background:var(--blue-bg);">💳</div>
+            Contributions
+          </div>
+          <span class="count-pill" id="contrib-count-badge">0 Records</span>
+        </div>
+        <div class="swipe-hint">← Swipe to browse payment vouchers →</div>
+        <div class="cards-track" id="cards-track">
+          <div class="cards-row" id="contrib-cards-container"></div>
+        </div>
+        <div id="no-contribs-msg" class="no-contribs hidden">
+          <div class="no-contribs-icon">🧾</div>
+          <div class="no-contribs-title">No contribution records yet</div>
+          <div class="no-contribs-sub">Payments will appear here once recorded.</div>
+        </div>
+      </div>
+
+      <!-- EXECUTIVE TEAM -->
+      <div class="team-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="icon" style="background:var(--yellow-light);">🏛️</div>
+            Executive Team
+          </div>
+          <span class="count-pill" style="background:var(--yellow-bg); border-color:var(--yellow-deep); color:var(--ink);">Committee</span>
+        </div>
+        <div class="team-grid" id="core-team-grid"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- RECEIPT MODAL (bottom sheet) -->
+  <div id="receipt-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-handle"><div class="modal-handle-bar"></div></div>
+      <div class="modal-header">
+        <div class="modal-brand">
+          <div class="modal-logo">🏛️</div>
+          <div>
+            <div class="modal-title">Payment Receipt</div>
+            <div class="modal-sub">Keishamthong Apunba Chaokhat Marup</div>
+          </div>
+        </div>
+        <button class="close-btn" id="close-receipt-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="receipt-rows">
+          <div class="receipt-row">
+            <span class="receipt-row-label">Receipt No.</span>
+            <span class="receipt-row-value" id="rcpt-id" style="font-family:monospace;">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Member</span>
+            <span class="receipt-row-value" id="rcpt-member">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Category</span>
+            <span class="receipt-row-value" id="rcpt-category" style="color:var(--blue);">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Date</span>
+            <span class="receipt-row-value" id="rcpt-date">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Mode</span>
+            <span class="receipt-row-value" id="rcpt-mode">—</span>
+          </div>
+          <div class="receipt-amount-row">
+            <span class="receipt-amount-label">Amount Paid</span>
+            <span class="receipt-amount-val" id="rcpt-amount">₹0</span>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button onclick="printReceiptFromModal()" class="btn btn-primary">🖨️ Print Receipt</button>
+          <button id="close-receipt-btn-2" class="btn btn-ghost">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <strong>Keishamthong Apunba Chaokhat Marup</strong> (KACM)<br>
+    <span style="font-size:11px; color:rgba(255,255,255,0.4);">© 2026 KACM · Official Member Portal · Built with <span class="footer-yellow">♥</span></span>
+  </footer>
+
+<script>
+  const SPREADSHEET_ID = "1yqBz_fRFmtvT8LhIyltwDv7w1ePgNtI-RqrAYWs_kLk";
+  let activeReceiptInvoiceUrl = '';
+
+  async function fetchSheetData(sheetName) {
+    const cacheBuster = Date.now();
+    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&t=${cacheBuster}`;
+    const res = await fetch(url, { cache: 'no-store', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const text = await res.text();
+    const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
+    if (!match) throw new Error(`Could not parse sheet ${sheetName}`);
+    const data = JSON.parse(match[1]);
+    return data.table ? data.table.rows : [];
+  }
+
+  function cleanDigits(str) { return str ? String(str).replace(/\D/g, '').trim() : ''; }
+
+  function formatDateTimeCell(cell) {
+    if (!cell) return { formatted: '—', timestamp: 0 };
+    let d = null;
+    const val = typeof cell === 'object' ? String(cell.v || cell.f || '') : String(cell || '');
+    if (val.startsWith('Date(')) {
+      const parts = val.match(/\d+/g);
+      if (parts && parts.length >= 3) {
+        const [year,month,day,h=0,m=0,s=0] = parts.map(Number);
+        d = new Date(year, month, day, h, m, s);
+      }
+    } else if (cell && cell.v instanceof Date) {
+      d = cell.v;
+    } else if (val) {
+      const match = val.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s*(AM|PM))?)?/i);
+      if (match) {
+        const [,day,month,year,h='0',m='0',s='0',ampm] = match;
+        let hours = parseInt(h,10);
+        if (ampm?.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (ampm?.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        d = new Date(parseInt(year,10), parseInt(month,10)-1, parseInt(day,10), hours, parseInt(m,10), parseInt(s,10));
+      } else {
+        const parsed = Date.parse(val);
+        if (!isNaN(parsed)) d = new Date(parsed);
+      }
+    }
+    if (!d || isNaN(d.getTime())) return { formatted: val || '—', timestamp: 0 };
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+    return {
+      formatted: `${String(d.getDate()).padStart(2,'0')}-${months[d.getMonth()]}-${d.getFullYear()} ${String(h).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`,
+      timestamp: d.getTime()
+    };
+  }
+
+  // Team colour themes (Miro palette)
+  function getTeamTheme(designation, index) {
+    const d = (designation || '').toLowerCase();
+    if (d.includes('president') || d.includes('chair')) return {
+      avatarBg: '#fcb900', initColor: '#1c1c1e',
+      desig: 'background:#fff4c4; border-color:#fcb900; color:#746019;'
+    };
+    if (d.includes('secretary')) return {
+      avatarBg: '#4262ff', initColor: '#fff',
+      desig: 'background:#f0f3ff; border-color:rgba(66,98,255,0.3); color:#2a41b6;'
+    };
+    if (d.includes('treasurer') || d.includes('finance')) return {
+      avatarBg: '#0fbcb0', initColor: '#fff',
+      desig: 'background:#c3faf5; border-color:rgba(15,188,176,0.35); color:#187574;'
+    };
+    const themes = [
+      { avatarBg:'#a78bfa', initColor:'#fff', desig:'background:#f5f3ff; border-color:rgba(167,139,250,0.3); color:#5b21b6;' },
+      { avatarBg:'#fb7185', initColor:'#fff', desig:'background:#fde0f0; border-color:#ffc6c6; color:#600000;' },
+      { avatarBg:'#f59e0b', initColor:'#fff', desig:'background:#ffe6cd; border-color:rgba(245,158,11,0.3); color:#92400e;' },
+    ];
+    return themes[index % themes.length];
+  }
+
+  async function initPortal() {
+    const loadingEl = document.getElementById('loading-state');
+    const errorEl   = document.getElementById('error-state');
+    const errorMsgEl= document.getElementById('error-message');
+    const portalEl  = document.getElementById('portal-content');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const phone = cleanDigits(urlParams.get('phone'));
+
+    if (!phone) {
+      loadingEl.classList.add('hidden');
+      errorEl.classList.remove('hidden');
+      errorMsgEl.innerHTML = `Add <code style="background:#f0f3ff;color:#4262ff;padding:2px 6px;border-radius:4px;font-size:12px;">?phone=XXXXXXXXXX</code> to the URL to look up a member.`;
+      return;
+    }
+
+    try {
+      // 1. Member lookup
+      const memberRows = await fetchSheetData('Form Responses 1');
+      let member = null;
+      for (const r of memberRows) {
+        if (!r?.c) continue;
+        const rowPhone = cleanDigits(r.c[4]?.v ?? r.c[3]?.v ?? '');
+        if (rowPhone && (rowPhone === phone || (rowPhone.length >= 10 && phone.length >= 10 && rowPhone.slice(-10) === phone.slice(-10)))) {
+          member = {
+            registeredAt: formatDateTimeCell(r.c[0]).formatted,
+            email: String(r.c[1]?.v || ''),
+            name:  String(r.c[2]?.v || 'Member'),
+            gender:String(r.c[3]?.v || '-'),
+            phone: String(r.c[4]?.v || phone),
+            photoUrl: String(r.c[5]?.v || '')
+          };
+          break;
+        }
+      }
+
+      if (!member) {
+        loadingEl.classList.add('hidden');
+        errorEl.classList.remove('hidden');
+        errorMsgEl.innerHTML = `No record found for <strong style="font-family:monospace;">${phone}</strong>. Please check the number and try again.`;
+        return;
+      }
+
+      // 2. Contributions
+      const contribRows = await fetchSheetData('Contributions');
+      let userContributions = [];
+      for (const cr of contribRows) {
+        if (!cr?.c) continue;
+        const memberKey = String(cr.c[1]?.v || '');
+        const cPhone = cleanDigits(memberKey);
+        if (!(cPhone && cPhone.slice(-10) === phone.slice(-10)) && !memberKey.toLowerCase().includes(member.name.toLowerCase())) continue;
+
+        const id = String(cr.c[0]?.v || Math.random().toString(36).slice(7));
+        const categoryName = String(cr.c[14]?.v || cr.c[2]?.v || 'General Contribution');
+        const dtObj = formatDateTimeCell(cr.c[3]);
+        const frequency = String(cr.c[4]?.v || 'One Time');
+        const amount = parseFloat(cr.c[5]?.v) || 0;
+        const remarks = String(cr.c[6]?.v || '');
+        const paymentVia = String(cr.c[11]?.v || 'Online / UPI');
+        let invoiceUrl = '';
+        if (cr.c[13]?.v && String(cr.c[13].v).startsWith('http')) {
+          invoiceUrl = String(cr.c[13].v).trim();
+        } else {
+          for (let i = cr.c.length - 1; i >= 0; i--) {
+            const v = String(cr.c[i]?.v || '').trim();
+            if (v.startsWith('http')) { invoiceUrl = v; break; }
+          }
+        }
+        userContributions.push({ id, categoryName, dateStr: dtObj.formatted, timestamp: dtObj.timestamp, frequency, amount, paymentVia, remarks, invoiceUrl });
+      }
+      userContributions.sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
+
+      // 3. Core Team
+      const coreRows = await fetchSheetData('Core Team');
+      let coreRole = null;
+      const coreTeamList = [];
+      const allFormMembers = memberRows.map(r => {
+        if (!r?.c) return null;
+        const fmName = String(r.c[2]?.v || '').trim();
+        const fmPhone = cleanDigits(r.c[4]?.v ?? r.c[3]?.v ?? '');
+        let fmPhoto = String(r.c[5]?.v || '').trim();
+        if (fmPhoto.startsWith('http')) {
+          if (fmPhoto.includes('drive.google.com/open?id=')) {
+            const fileId = fmPhoto.split('id=')[1]?.split('&')[0];
+            if (fileId) fmPhoto = `https://lh3.googleusercontent.com/d/${fileId}=s400`;
+          } else if (fmPhoto.includes('drive.google.com/file/d/')) {
+            const fileId = fmPhoto.split('/file/d/')[1]?.split('/')[0];
+            if (fileId) fmPhoto = `https://lh3.googleusercontent.com/d/${fileId}=s400`;
+          }
+        }
+        return { name: fmName, phone: fmPhone, photoUrl: fmPhoto };
+      }).filter(Boolean);
+
+      for (const tr of coreRows) {
+        if (!tr?.c) continue;
+        const cell0 = String(tr.c[0]?.v || ''); const cell1 = String(tr.c[1]?.v || '');
+        const cell2 = String(tr.c[2]?.v || ''); const cell3 = String(tr.c[3]?.v || '');
+        if (cell0.toLowerCase().includes('designation') || cell1.toLowerCase().includes('designation')) continue;
+        const designation = cell1 || cell0;
+        if (!designation || designation === '—') continue;
+        const cPhone = cleanDigits(cell3);
+        const cName  = cell3 ? cell3.split(':')[0].trim() : 'Vacant';
+        if (cPhone && cPhone.slice(-10) === phone.slice(-10)) coreRole = designation;
+        let photoUrl = '';
+        if (cell3 && cell3 !== 'Vacant') {
+          const matched = allFormMembers.find(fm =>
+            (fm.phone && cPhone && fm.phone.slice(-10) === cPhone.slice(-10)) ||
+            (fm.name && cName && (cell3.toLowerCase().includes(fm.name.toLowerCase()) || fm.name.toLowerCase().includes(cName.toLowerCase())))
+          );
+          if (matched?.photoUrl) photoUrl = matched.photoUrl;
+        }
+        coreTeamList.push({ designation, roles: cell2 || 'Executive Office Bearer', memberStr: cell3 || 'Vacant', photoUrl });
+      }
+
+      if (coreTeamList.length === 0) {
+        [
+          { designation:'President', roles:'Overall Administration & Governance', memberStr:'Thounaojam Ibohal: 9862581747' },
+          { designation:'General Secretary', roles:'Operations & Community Affairs', memberStr:'Keisham Premkumar: 9856271310' },
+          { designation:'Treasurer', roles:'Finance, Accounts & Vouchers', memberStr:'Pukhrambam Hiteshore Singh: 9862973977' },
+          { designation:'Digital & IT Coordinator', roles:'Apps, Web Portal & Records', memberStr:'Hiteshore Official: 9731399725' }
+        ].forEach(dt => {
+          const cp = cleanDigits(dt.memberStr);
+          if (cp && cp.slice(-10) === phone.slice(-10)) coreRole = dt.designation;
+          coreTeamList.push({ ...dt, photoUrl: '' });
+        });
+      }
+
+      // ── RENDER ──
+
+      // Profile
+      document.getElementById('member-name').textContent = member.name;
+      document.getElementById('gender-val').textContent  = member.gender;
+      document.getElementById('phone-val').textContent   = member.phone;
+      if (member.email) {
+        document.getElementById('email-chip').classList.remove('hidden');
+        document.getElementById('email-val').textContent = member.email;
+      }
+      if (member.photoUrl?.startsWith('http')) {
+        let url = member.photoUrl;
+        if (url.includes('drive.google.com/open?id=')) {
+          const id = url.split('id=')[1]; url = `https://lh3.googleusercontent.com/d/${id}=s400`;
+        }
+        const img = document.getElementById('avatar-img');
+        img.src = url;
+        img.onload = () => { img.style.display = 'block'; document.getElementById('avatar-fallback').style.display = 'none'; };
+      }
+      if (coreRole) {
+        document.getElementById('core-team-badge').classList.remove('hidden');
+        document.getElementById('core-team-role').textContent = coreRole;
+      }
+
+      // KPIs
+      const totalAmount = userContributions.reduce((s,c) => s+c.amount, 0);
+      const categories  = new Set(userContributions.map(c => c.categoryName)).size;
+      document.getElementById('kpi-total-amount').textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
+      document.getElementById('kpi-categories').textContent   = categories;
+      document.getElementById('kpi-transactions').textContent = userContributions.length;
+
+      const display = userContributions.slice(0, 10);
+      document.getElementById('contrib-count-badge').textContent = `${display.length} of ${userContributions.length}`;
+
+      // Contribution cards
+      const cardsContainer = document.getElementById('contrib-cards-container');
+      cardsContainer.innerHTML = '';
+      if (userContributions.length === 0) {
+        document.getElementById('no-contribs-msg').classList.remove('hidden');
+        document.getElementById('cards-track').style.display = 'none';
+      } else {
+        display.forEach(c => {
+          const freq = c.frequency.toLowerCase();
+          const freqClass = freq.includes('monthly') ? 'monthly' : freq.includes('yearly') ? 'yearly' : freq.includes('one') ? 'onetime' : 'default';
+          const card = document.createElement('div');
+          card.className = 'contrib-card';
+          card.innerHTML = `
+            <div class="contrib-card-top">
+              <span class="freq-pill ${freqClass}">${c.frequency}</span>
+              <span class="contrib-id">#${c.id}</span>
+            </div>
+            <div>
+              <div class="contrib-amount">₹${c.amount.toLocaleString('en-IN')}</div>
+              <div class="contrib-cat">${c.categoryName}</div>
+            </div>
+            <div class="contrib-meta">
+              <div class="contrib-meta-row">📅 <span>${c.dateStr}</span></div>
+              <div class="contrib-meta-row">💳 Mode: <strong>${c.paymentVia}</strong></div>
+              ${c.remarks ? `<div class="contrib-remarks">📝 ${c.remarks}</div>` : ''}
+            </div>
+            <div class="contrib-actions">
+              <button class="btn btn-primary" onclick="handlePrintClick('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">🖨️ Receipt</button>
+              <button class="btn btn-ghost" onclick="openReceipt('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">Details</button>
+            </div>`;
+          cardsContainer.appendChild(card);
+        });
+      }
+
+      // Team grid
+      const teamGrid = document.getElementById('core-team-grid');
+      teamGrid.innerHTML = '';
+      coreTeamList.forEach((t, idx) => {
+        const theme = getTeamTheme(t.designation, idx);
+        const isVacant = !t.memberStr || t.memberStr === 'Vacant';
+        const nameClean = t.memberStr ? t.memberStr.substring(0, t.memberStr.lastIndexOf(':')).trim() || t.memberStr : 'Vacant';
+        const initials = nameClean && !isVacant ? nameClean.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
+        const cPhone   = cleanDigits(t.memberStr);
+        const card = document.createElement('div');
+        card.className = `team-card${isVacant?' team-card-vacant':''}`;
+        if (isVacant) card.style.opacity = '0.55';
+        card.innerHTML = `
+          <div class="team-avatar" style="background:${theme.avatarBg};">
+            ${t.photoUrl ? `<img src="${t.photoUrl}" alt="${nameClean}" onError="this.style.display='none';" />` : ''}
+            <span style="color:${theme.initColor};">${initials}</span>
+          </div>
+          <div class="team-info">
+            <div class="team-name">${nameClean}</div>
+            <div class="team-desig-row">
+              <span class="team-desig" style="${theme.desig}">${t.designation}</span>
+            </div>
+            <div class="team-roles">${t.roles}</div>
+          </div>
+          ${cPhone && !isVacant ? `<a href="tel:${cPhone}" class="team-phone-btn" title="Call">📞</a>` : ''}`;
+        teamGrid.appendChild(card);
+      });
+
+      loadingEl.classList.add('hidden');
+      portalEl.classList.remove('hidden');
+      portalEl.style.display = 'flex';
+
+    } catch (err) {
+      console.error(err);
+      loadingEl.classList.add('hidden');
+      errorEl.classList.remove('hidden');
+      errorMsgEl.textContent = `Could not load data. Error: ${err.message}`;
+    }
+  }
+
+  function handlePrintClick(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
+    const inv = decodeURIComponent(urlEnc || '');
+    if (inv.startsWith('http')) { window.open(inv, '_blank'); }
+    else { openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc); setTimeout(()=>window.print(), 300); }
+  }
+
+  function openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
+    activeReceiptInvoiceUrl = decodeURIComponent(urlEnc || '');
+    document.getElementById('rcpt-id').textContent      = id.toUpperCase();
+    document.getElementById('rcpt-member').textContent  = document.getElementById('member-name').textContent;
+    document.getElementById('rcpt-category').textContent= decodeURIComponent(catEnc);
+    document.getElementById('rcpt-date').textContent    = decodeURIComponent(dateEnc);
+    document.getElementById('rcpt-mode').textContent    = decodeURIComponent(modeEnc);
+    document.getElementById('rcpt-amount').textContent  = `₹${Number(amount).toLocaleString('en-IN')}`;
+    document.getElementById('receipt-modal').classList.add('open');
+  }
+
+  function printReceiptFromModal() {
+    if (activeReceiptInvoiceUrl?.startsWith('http')) { window.open(activeReceiptInvoiceUrl, '_blank'); }
+    else window.print();
+  }
+
+  function closeModal() { document.getElementById('receipt-modal').classList.remove('open'); }
+  document.getElementById('close-receipt-btn').onclick   = closeModal;
+  document.getElementById('close-receipt-btn-2').onclick = closeModal;
+  document.getElementById('receipt-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+  document.addEventListener('DOMContentLoaded', initPortal);
+</script>
+</body>
+</html>
