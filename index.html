@@ -261,7 +261,6 @@
     }
     .cards-track::-webkit-scrollbar { display: none; }
     .cards-row { display: flex; gap: 14px; width: max-content; }
-    /* last card gets a right padding so it rests flush at the scroll end */
     .cards-row::after { content: ''; display: block; width: 2px; flex-shrink: 0; }
 
     /* Contribution card */
@@ -319,6 +318,8 @@
     .btn-ghost:hover { background: var(--hairline-soft); }
     .btn-yellow { background: var(--yellow); color: var(--ink); }
     .btn-yellow:hover { background: var(--yellow-deep); }
+    .btn-receipt { background: #4361ee; color: #fff; }
+    .btn-receipt:hover { background: #3a56dc; }
 
     .no-contribs {
       text-align: center; padding: 32px 16px;
@@ -358,7 +359,7 @@
     .team-avatar img {
       position: absolute; inset: 0;
       width: 100%; height: 100%; object-fit: cover;
-      display: none; /* shown via onload */
+      display: none;
       z-index: 2;
     }
     .team-avatar .team-initials {
@@ -385,7 +386,7 @@
     .modal-overlay {
       display: none; position: fixed; inset: 0; z-index: 50;
       background: rgba(5,0,56,0.5); backdrop-filter: blur(6px);
-      padding: 16px 16px 0 16px; /* Updated to touch the bottom */
+      padding: 16px 16px 0 16px;
       align-items: flex-end; justify-content: center;
     }
     .modal-overlay.open { display: flex; }
@@ -874,7 +875,7 @@
       const display = userContributions.slice(0, 10);
       document.getElementById('contrib-count-badge').textContent = `${display.length} of ${userContributions.length}`;
 
-      // Contribution cards (Updated to Plain White)
+      // Contribution cards
       const cardsContainer = document.getElementById('contrib-cards-container');
       cardsContainer.innerHTML = '';
       if (userContributions.length === 0) {
@@ -888,7 +889,6 @@
           const card = document.createElement('div');
           card.className = `contrib-card ${freqClass}`;
           
-          // Added onclick directly to the card
           card.setAttribute('onclick', `openReceipt('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')`);
 
           card.innerHTML = `
@@ -906,8 +906,7 @@
               ${c.remarks ? `<div class="contrib-remarks">📝 ${c.remarks}</div>` : ''}
             </div>
             <div class="contrib-actions">
-              <!-- event.stopPropagation() prevents the card click event from firing when just printing -->
-              <button class="btn btn-ghost" style="flex:1;" onclick="event.stopPropagation(); handlePrintClick('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">🖨️ Receipt</button>
+              <button class="btn btn-receipt" style="flex:1;" onclick="event.stopPropagation(); handlePrintClick('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">🖨️ Receipt</button>
             </div>`;
           cardsContainer.appendChild(card);
         });
