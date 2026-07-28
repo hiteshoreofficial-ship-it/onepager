@@ -240,12 +240,23 @@
 
     /* ── CONTRIBUTION SECTION ── */
     .contrib-section {
-      background: var(--canvas); border-radius: var(--r-feat);
-      border: 1px solid var(--hairline); padding: 20px;
+      background: var(--blue);
+      border-radius: 0;
+      border: none;
+      padding: 20px 16px;
+      /* bleed to full width past main's padding */
+      margin-left: -16px;
+      margin-right: -16px;
+    }
+    .contrib-section .section-title { color: #fff; }
+    .contrib-section .section-title .icon { background: rgba(255,255,255,0.15); }
+    .contrib-section .count-pill {
+      background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.25);
+      color: #fff;
     }
     .swipe-hint {
       display: flex; align-items: center; justify-content: center; gap: 6px;
-      font-size: 11px; font-weight: 600; color: var(--ink-muted);
+      font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.65);
       margin-bottom: 12px;
     }
     .cards-track { overflow-x: auto; padding-bottom: 8px; }
@@ -254,12 +265,17 @@
     /* Contribution card */
     .contrib-card {
       width: 260px; flex-shrink: 0;
-      background: var(--surface); border-radius: var(--r-xxxl);
+      background: var(--canvas); border-radius: var(--r-xxl);
       border: 1px solid var(--hairline-soft);
-      padding: 18px; display: flex; flex-direction: column; gap: 14px;
+      border-left: 4px solid var(--blue);
+      padding: 16px; display: flex; flex-direction: column; gap: 14px;
       transition: transform 0.15s, box-shadow 0.15s;
     }
     .contrib-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-elevated); }
+    .contrib-card.monthly { border-left-color: var(--blue); }
+    .contrib-card.yearly  { border-left-color: var(--teal); }
+    .contrib-card.onetime { border-left-color: #a855f7; }
+    .contrib-card.default { border-left-color: var(--ink-muted); }
 
     .contrib-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
     .freq-pill {
@@ -301,8 +317,8 @@
       display: flex; flex-direction: column; align-items: center; gap: 10px;
     }
     .no-contribs-icon { font-size: 32px; }
-    .no-contribs-title { font-size: 14px; font-weight: 700; color: var(--ink); }
-    .no-contribs-sub { font-size: 12px; color: var(--ink-muted); }
+    .no-contribs-title { font-size: 14px; font-weight: 700; color: #fff; }
+    .no-contribs-sub { font-size: 12px; color: rgba(255,255,255,0.65); }
 
     /* ── TEAM SECTION ── */
     .team-section {
@@ -320,13 +336,22 @@
     }
     .team-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
     .team-avatar {
-      width: 48px; height: 48px; flex-shrink: 0;
+      width: 52px; height: 52px; flex-shrink: 0;
       border-radius: var(--r-lg); overflow: hidden;
+      position: relative;
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px; font-weight: 800; color: #fff;
+      font-size: 17px; font-weight: 800; color: #fff;
       font-family: var(--font-body);
     }
-    .team-avatar img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .team-avatar img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+      display: none; /* shown via onload */
+      z-index: 2;
+    }
+    .team-avatar .team-initials {
+      position: relative; z-index: 1;
+    }
     .team-info { flex: 1; min-width: 0; }
     .team-name { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .team-desig-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -513,8 +538,8 @@
       <div class="contrib-section">
         <div class="section-header">
           <div class="section-title">
-            <div class="icon" style="background:var(--blue-bg);">💳</div>
-            Contributions
+            <div class="icon">💳</div>
+            Contributions <span style="font-weight:500; font-size:12px; opacity:0.75;">(last 10 transactions)</span>
           </div>
           <span class="count-pill" id="contrib-count-badge">0 Records</span>
         </div>
@@ -846,7 +871,7 @@
           const freq = c.frequency.toLowerCase();
           const freqClass = freq.includes('monthly') ? 'monthly' : freq.includes('yearly') ? 'yearly' : freq.includes('one') ? 'onetime' : 'default';
           const card = document.createElement('div');
-          card.className = 'contrib-card';
+          card.className = `contrib-card ${freqClass}`;
           card.innerHTML = `
             <div class="contrib-card-top">
               <span class="freq-pill ${freqClass}">${c.frequency}</span>
@@ -883,8 +908,8 @@
         if (isVacant) card.style.opacity = '0.55';
         card.innerHTML = `
           <div class="team-avatar" style="background:${theme.avatarBg};">
-            ${t.photoUrl ? `<img src="${t.photoUrl}" alt="${nameClean}" onError="this.style.display='none';" />` : ''}
-            <span style="color:${theme.initColor};">${initials}</span>
+            <span class="team-initials" style="color:${theme.initColor};">${initials}</span>
+            ${t.photoUrl ? `<img src="${t.photoUrl}" alt="${nameClean}" onload="this.style.display='block';" onerror="this.style.display='none';" />` : ''}
           </div>
           <div class="team-info">
             <div class="team-name">${nameClean}</div>
