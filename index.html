@@ -1,1802 +1,1204 @@
-/* ==========================================================================
- * Form / AppSheet Member Photo sync logic
- * ========================================================================== */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <title>KACM Member Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens (Miro-inspired) ───────────────────────── */
+    :root {
+      --ink:         #050038;
+      --ink-muted:   #555a6a;
+      --canvas:      #ffffff;
+      --surface:     #f7f8fa;
+      --hairline:    #e0e2e8;
+      --hairline-soft: #eef0f3;
 
-/**
- * Run this ONCE from the Apps Script editor (select setupFormTrigger,
- * click Run, authorize when prompted) to wire this up to both
- * "On form submit" (Google Forms) and "On change" (AppSheet API updates).
- * Safe to re-run any time — it won't create duplicate triggers.
- */
-function setupFormTrigger() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  ScriptApp.getProjectTriggers().forEach(function (t) {
-    var handler = t.getHandlerFunction();
-    if (handler === 'onMemberFormSubmit' || handler === 'onMemberSheetChange') ScriptApp.deleteTrigger(t);
-  });
-  ScriptApp.newTrigger('onMemberFormSubmit')
-    .forSpreadsheet(ss)
-    .onFormSubmit()
-    .create();
-  ScriptApp.newTrigger('onMemberSheetChange')
-    .forSpreadsheet(ss)
-    .onChange()
-    .create();
-  return 'Triggers installed.';
-}
+      --yellow:      #ffd02f;
+      --yellow-deep: #fcb900;
+      --yellow-light:#fff4c4;
+      --yellow-bg:   #fff8e0;
 
-/** Handler for Google Form submissions. */
-function onMemberFormSubmit(e) {
-  var sheet = (e && e.range) ? e.range.getSheet() : null;
-  syncMemberPhotos(sheet);
-}
+      --blue:        #4262ff;
+      --blue-light:  #5b76fe;
+      --blue-pressed:#2a41b6;
+      --blue-bg:     #f0f3ff;
 
-/** Handler for AppSheet edits/submits (via Sheets API). */
-function onMemberSheetChange(e) {
-  syncMemberPhotos();
-}
+      --teal:        #0fbcb0;
+      --teal-light:  #c3faf5;
+      --teal-dark:   #187574;
 
-/**
- * Keeps 'Member Photo' (Drive view URL) and 'PhotoPath' (relative file path) in sync:
- * - If PhotoPath was set or updated (e.g. from AppSheet), derives and updates Member Photo URL.
- * - If Member Photo was set (e.g. from Google Form), derives and updates PhotoPath.
- */
-function syncMemberPhotos(sheet) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  sheet = sheet || ss.getSheetByName('Form Responses 1') || ss.getActiveSheet();
-  if (!sheet) return;
+      --coral:       #ff9999;
+      --coral-light: #ffc6c6;
+      --coral-dark:  #600000;
 
-  var lastCol = sheet.getLastColumn();
-  if (lastCol === 0) return;
+      --rose:        #ffd8f4;
+      --rose-light:  #fde0f0;
 
-  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0]
-    .map(function (h) { return String(h).trim(); });
+      --success:     #00b473;
+      --success-bg:  #d0f5e9;
 
-  var photoColIndex = headers.indexOf('Member Photo') + 1;
-  var pathColIndex = headers.indexOf('PhotoPath') + 1;
-  if (photoColIndex === 0 || pathColIndex === 0) return; // headers missing, nothing to do
+      --footer-bg:   #1c1c1e;
 
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return;
+      --r-sm: 6px;
+      --r-md: 8px;
+      --r-lg: 12px;
+      --r-xl: 16px;
+      --r-xxl:20px;
+      --r-xxxl:28px;
+      --r-feat:32px;
+      --r-full:9999px;
 
-  var numRows = lastRow - 1;
-  var photoValues = sheet.getRange(2, photoColIndex, numRows, 1).getValues();
-  var pathValues = sheet.getRange(2, pathColIndex, numRows, 1).getValues();
+      --shadow-card: 0 4px 20px -2px rgba(5,0,56,0.08), 0 1px 4px -1px rgba(5,0,56,0.04);
+      --shadow-elevated: 0 12px 40px -4px rgba(5,0,56,0.12), 0 2px 8px -2px rgba(5,0,56,0.06);
 
-  var folderCache = {};
-  var photoUpdates = [];
-  var pathUpdates = [];
-  var hasPhotoUpdates = false;
-  var hasPathUpdates = false;
-
-  for (var i = 0; i < numRows; i++) {
-    var rawPhoto = String(photoValues[i][0] || '').trim();
-    var rawPath = String(pathValues[i][0] || '').trim();
-
-    var currentPhoto = rawPhoto;
-    var currentPath = rawPath;
-
-    if (rawPath) {
-      var paths = rawPath.split(',').map(function (p) { return p.trim(); }).filter(Boolean);
-      var derivedUrls = [];
-      for (var p = 0; p < paths.length; p++) {
-        var file = getFileFromPhotoPath(paths[p], folderCache);
-        if (file) {
-          derivedUrls.push('https://drive.google.com/file/d/' + file.getId() + '/view?usp=sharing');
-        }
-      }
-
-      if (derivedUrls.length > 0) {
-        var newPhotoUrl = derivedUrls.join(', ');
-        var pathFileId = (newPhotoUrl.match(/[-\w]{25,}/) || [])[0];
-        var photoFileId = (rawPhoto.match(/[-\w]{25,}/) || [])[0];
-
-        if (pathFileId !== photoFileId) {
-          currentPhoto = newPhotoUrl;
-          hasPhotoUpdates = true;
-        }
-      }
-    } else if (rawPhoto) {
-      var urls = rawPhoto.split(',').map(function (u) { return u.trim(); }).filter(Boolean);
-      var derivedPaths = urls.map(deriveImagePath).filter(Boolean);
-      if (derivedPaths.length > 0) {
-        currentPath = derivedPaths.join(', ');
-        hasPathUpdates = true;
-      }
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body:    'DM Sans', system-ui, sans-serif;
     }
 
-    photoUpdates.push([currentPhoto]);
-    pathUpdates.push([currentPath]);
-  }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  if (hasPhotoUpdates) {
-    sheet.getRange(2, photoColIndex, numRows, 1).setValues(photoUpdates);
-  }
-  if (hasPathUpdates) {
-    sheet.getRange(2, pathColIndex, numRows, 1).setValues(pathUpdates);
-  }
-}
-
-/** Turns a Drive "open?id=..." URL into "/Images/<actual filename>.jpg" without moving the file. */
-function deriveImagePath(url) {
-  var match = url.match(/[-\w]{25,}/); // Drive file IDs are long alphanumeric strings
-  if (!match) return '';
-  var fileId = match[0];
-  try {
-    var file = DriveApp.getFileById(fileId);
-    return '/Member Registration Form (File responses)/Member Photo (File responses)/' + file.getName();
-  } catch (err) {
-    return ''; // file inaccessible or ID couldn't be resolved
-  }
-}
-
-/* ==========================================================================
- * InvoicePath -> InvoiceUrl logic (for AppSheet-inserted rows)
- * ========================================================================== */
-
-/**
- * Run this ONCE from the Apps Script editor to install an "On change" trigger.
- *
- * IMPORTANT: AppSheet inserts/edits rows via the Sheets API, which does NOT
- * fire onEdit (simple or installable). Only an installable onChange trigger
- * fires for API-driven edits — so this uses onChange instead of onEdit.
- *
- * Safe to re-run any time — it won't create duplicate triggers.
- */
-function setupInvoiceUrlTrigger() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'onInvoiceSheetChange') ScriptApp.deleteTrigger(t);
-  });
-  ScriptApp.newTrigger('onInvoiceSheetChange')
-    .forSpreadsheet(ss)
-    .onChange()
-    .create();
-  return 'Invoice URL trigger installed.';
-}
-
-/**
- * onChange doesn't tell us which sheet/row changed, so we sweep every sheet
- * in the spreadsheet and fill in any blank InvoiceUrl cells that have a
- * matching InvoicePath. Cheap enough for typical contribution-sheet sizes.
- */
-function onInvoiceSheetChange(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  ss.getSheets().forEach(function (sheet) {
-    fillMissingInvoiceUrls(sheet);
-  });
-}
-
-/**
- * Scans a sheet for rows where InvoicePath is set but InvoiceUrl is blank,
- * resolves the file in Drive, and writes its view URL.
- * Can also be run manually, or wired to a time-based trigger as a safety net.
- */
-function fillMissingInvoiceUrls(sheet) {
-  sheet = sheet || SpreadsheetApp.getActiveSheet();
-  var lastCol = sheet.getLastColumn();
-  if (lastCol === 0) return;
-
-  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0]
-    .map(function (h) { return String(h).trim(); });
-
-  var pathCol = headers.indexOf('InvoicePath') + 1;
-  var urlCol = headers.indexOf('InvoiceUrl') + 1;
-  if (pathCol === 0 || urlCol === 0) return; // this sheet doesn't have these columns
-
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return;
-
-  var numRows = lastRow - 1;
-  var paths = sheet.getRange(2, pathCol, numRows, 1).getValues();
-  var urls = sheet.getRange(2, urlCol, numRows, 1).getValues();
-
-  var folderCache = {}; // avoid re-walking the same folder path repeatedly
-  var updates = [];
-  var hasUpdates = false;
-
-  for (var i = 0; i < numRows; i++) {
-    var path = String(paths[i][0] || '').trim();
-    var existingUrl = String(urls[i][0] || '').trim();
-
-    if (path && !existingUrl) {
-      var fileUrl = getFileUrlFromPath(path, folderCache);
-      updates.push([fileUrl || '']);
-      if (fileUrl) hasUpdates = true;
-    } else {
-      updates.push([existingUrl]);
+    body {
+      font-family: var(--font-body);
+      background: var(--surface);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
     }
-  }
 
-  if (hasUpdates) {
-    sheet.getRange(2, urlCol, numRows, 1).setValues(updates);
-  }
-}
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: var(--r-full); }
 
-/**
- * InvoicePath only stores the path relative to the actual parent folder
- * (e.g. "/Contribution Invoices/Some File_abc123.pdf"), but the real
- * location in Drive is:
- *   My Drive > Keishamthong Apunba Chaokhat Marup > Contribution Invoices
- * So we prepend that base path before walking folders. Update this array
- * if the folder is ever renamed or moved.
- */
-var INVOICE_BASE_FOLDER_PATH = ['Keishamthong Apunba Chaokhat Marup'];
-
-/**
- * Resolves a path like "/Contribution Invoices/Some File_abc123.pdf"
- * to that specific file's shareable view URL (not the folder), e.g.
- * "https://drive.google.com/file/d/<fileId>/view?usp=sharing"
- *
- * Assumes the folder lives under My Drive. If it's in a Shared Drive
- * instead, swap DriveApp.getRootFolder() in getFolderByPath() for the
- * Shared Drive's root (e.g. DriveApp.getFolderById('SHARED_DRIVE_ROOT_ID')).
- */
-function getFileUrlFromPath(path, folderCache) {
-  folderCache = folderCache || {};
-  var relativeParts = String(path).split('/').filter(Boolean); // drop leading/trailing slashes
-  if (relativeParts.length === 0) return '';
-
-  var fileName = relativeParts.pop();
-  var folderParts = INVOICE_BASE_FOLDER_PATH.concat(relativeParts);
-  var folder = getFolderByPath(folderParts, folderCache);
-  if (!folder) return '';
-
-  var files = folder.getFilesByName(fileName);
-  if (!files.hasNext()) return '';
-
-  var file = files.next();
-  // File-level "view" link — opens the PDF itself, not the containing folder.
-  return 'https://drive.google.com/file/d/' + file.getId() + '/view?usp=sharing';
-}
-
-/** Walks a list of folder names starting from My Drive root, with caching. */
-function getFolderByPath(folderNames, cache) {
-  var key = folderNames.join('/');
-  if (cache[key]) return cache[key];
-
-  var folder = DriveApp.getRootFolder();
-  for (var i = 0; i < folderNames.length; i++) {
-    var subFolders = folder.getFoldersByName(folderNames[i]);
-    if (!subFolders.hasNext()) return null; // folder segment not found
-    folder = subFolders.next();
-  }
-  cache[key] = folder;
-  return folder;
-}
-
-/* ==========================================================================
- * PDF Report Generation (AppScriptReports table)
- * ========================================================================== */
-
-var REPORTS_SHEET_NAME = 'AppScriptReports';
-var MONTHLY_REPORT_SOURCE_SHEET = 'MonthlyContributionReport';
-var YEARLY_REPORT_SOURCE_SHEET = 'YearlyContributionReport';
-var ONE_TIME_REPORT_SOURCE_SHEET = 'OneTimeContributionReport';
-var CONTRIBUTION_CATEGORY_SHEET_NAME = 'Contribution Category';
-var ORG_NAME = 'Keishamthong Apunba Chaokhat Marup (KACM)';
-var ORG_ADDRESS = 'Keishamthong Ahanthem Leikai, Imphal-West, Manipur - 795001';
-var MONTH_HEADERS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-// A4 Landscape (Monthly report), in points (1mm = 2.83465pt). Long side = width when landscape.
-var PAGE_WIDTH = 841.89;
-var PAGE_HEIGHT = 595.28;
-
-// A4 Portrait (Yearly / One Time reports) — same A4 dimensions, just swapped.
-var PAGE_WIDTH_PORTRAIT = 595.28;
-var PAGE_HEIGHT_PORTRAIT = 841.89;
-
-var PAGE_MARGIN = 28.35; // ~1cm
-var MEMBERS_PER_PAGE = 18;         // Monthly report
-var YEARLY_MEMBERS_PER_PAGE = 25;  // Yearly report
-var ONE_TIME_ROWS_PER_PAGE = 25;   // One Time report
-var MEMBER_FORM_SHEET_NAME = 'Form Responses 1';
-var MEMBER_ROWS_PER_PAGE = 35;     // Member list pages
-var PHOTO_GRID_COLUMNS = 4;        // Member photo collage — configurable
-var PHOTO_GRID_ROWS = 8;           // Member photo collage — configurable
-var PHOTO_GRID_GAP = 6;            // points, gap between photo cells
-var STATEMENT_SOURCE_SHEET = 'AccountStatement';
-var STATEMENT_ROWS_FIRST_PAGE = 35;   // page 1 has less room (summary table takes space)
-var STATEMENT_ROWS_OTHER_PAGES = 45;  // subsequent pages have more room (no summary table)
-
-/**
- * Run this ONCE from the Apps Script editor to install the trigger that
- * watches AppScriptReports for new/edited rows.
- *
- * IMPORTANT: If AppSheet inserts these rows via the Sheets API (same as the
- * Reports table before it), onEdit will NOT fire — only an installable
- * onChange trigger catches API-driven edits. That's why this uses onChange,
- * same reasoning as the InvoiceUrl trigger above.
- *
- * Safe to re-run any time — it won't create duplicate triggers.
- */
-function setupReportGenerationTrigger() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'onReportsSheetChange') ScriptApp.deleteTrigger(t);
-  });
-  ScriptApp.newTrigger('onReportsSheetChange')
-    .forSpreadsheet(ss)
-    .onChange()
-    .create();
-  return 'Report generation trigger installed.';
-}
-
-/**
- * Optional safety net: wire this function to a time-driven trigger
- * (Triggers UI -> Add Trigger -> processPendingReportsSafetyNet -> Time-driven
- * -> every 5 minutes) in case onChange ever misses an edit.
- */
-function processPendingReportsSafetyNet() {
-  processPendingReports();
-}
-
-function onReportsSheetChange(e) {
-  processPendingReports();
-}
-
-/** Scans AppScriptReports for IsReady=FALSE rows and generates whatever it currently knows how to. */
-function processPendingReports() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(REPORTS_SHEET_NAME);
-  if (!sheet) return;
-
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return;
-
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
-    .map(function (h) { return String(h).trim(); });
-
-  var col = {};
-  headers.forEach(function (h, i) { col[h] = i + 1; });
-
-  var required = ['ReportID', 'Report Type', 'Year', 'Collection Frequency', 'Generated DateTime', 'ReportFilePath', 'IsReady'];
-  for (var r = 0; r < required.length; r++) {
-    if (!col[required[r]]) {
-      throw new Error('AppScriptReports is missing expected column: ' + required[r]);
+    /* ── TOP NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 40;
+      background: var(--canvas);
+      border-bottom: 1px solid var(--hairline-soft);
+      padding: 0 16px;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
     }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-logo {
+      width: 38px; height: 38px; border-radius: var(--r-lg);
+      background: var(--yellow);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: var(--ink);
+      flex-shrink: 0;
+    }
+    .nav-name {
+      font-size: 15px; font-weight: 700; color: var(--ink);
+      line-height: 1.2; letter-spacing: -0.3px;
+    }
+    .nav-sub { font-size: 11px; color: var(--ink-muted); font-weight: 500; }
+    .nav-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--yellow-bg); color: var(--ink); border: 1px solid var(--yellow-deep);
+      font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+      padding: 3px 9px; border-radius: var(--r-full);
+      white-space: nowrap;
+    }
+
+    /* ── MAIN ── */
+    main {
+      flex: 1; max-width: 600px; width: 100%;
+      margin: 0 auto; padding: 20px 16px 32px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    /* ── STATES ── */
+    .state-card {
+      background: var(--canvas); border-radius: var(--r-feat);
+      border: 1px solid var(--hairline); padding: 48px 24px;
+      text-align: center; display: flex; flex-direction: column;
+      align-items: center; gap: 16px;
+    }
+    .state-icon {
+      width: 56px; height: 56px; border-radius: var(--r-full);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+    }
+    .state-icon.loading { background: var(--blue-bg); }
+    .state-icon.error   { background: var(--coral-light); }
+    .spinner {
+      width: 28px; height: 28px; border: 3px solid var(--hairline);
+      border-top-color: var(--blue); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .state-title { font-size: 18px; font-weight: 700; color: var(--ink); }
+    .state-body { font-size: 13px; color: var(--ink-muted); line-height: 1.5; max-width: 280px; }
+
+    /* ── HERO PROFILE CARD ── */
+    .profile-card {
+      background: var(--ink);
+      border-radius: var(--r-feat);
+      padding: 24px;
+      color: #fff;
+      position: relative; overflow: hidden;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: var(--yellow);
+      border-radius: 50%; opacity: 0.08;
+      pointer-events: none;
+    }
+    .profile-card::after {
+      content: '';
+      position: absolute; bottom: -60px; left: 20px;
+      width: 140px; height: 140px;
+      background: var(--blue-light);
+      border-radius: 50%; opacity: 0.1;
+      pointer-events: none;
+    }
+    .profile-inner { position: relative; z-index: 1; }
+
+    .profile-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+      padding: 4px 10px; border-radius: var(--r-full);
+      border: 1px solid;
+    }
+    .tag-blue { background: rgba(66,98,255,0.2); border-color: rgba(91,118,254,0.35); color: #a0b0ff; }
+    .tag-yellow { background: rgba(255,208,47,0.15); border-color: rgba(252,185,0,0.3); color: var(--yellow); }
+
+    .profile-row { display: flex; align-items: flex-start; gap: 16px; }
+    .avatar-wrap {
+      width: 80px; height: 80px; flex-shrink: 0;
+      border-radius: var(--r-xl); overflow: hidden;
+      background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(255,255,255,0.15);
+      font-size: 32px;
+      position: relative;
+    }
+    .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .profile-name {
+      font-family: var(--font-display); font-size: 19px; font-weight: 700;
+      color: #fff; line-height: 1.2; letter-spacing: -0.3px;
+      margin-bottom: 10px;
+    }
+    .meta-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .meta-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--r-full); padding: 4px 10px;
+      font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.75);
+    }
+
+    /* ── KPI STRIP ── */
+    .kpi-strip {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .kpi-card {
+      background: var(--canvas); border-radius: var(--r-xxl);
+      border: 1px solid var(--hairline); padding: 14px 12px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .kpi-icon {
+      width: 28px; height: 28px; border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; margin-bottom: 4px;
+    }
+    .kpi-icon.yellow { background: var(--yellow-light); }
+    .kpi-icon.blue   { background: var(--blue-bg); }
+    .kpi-icon.teal   { background: var(--teal-light); }
+    .kpi-value { font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; line-height: 1; }
+    .kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-muted); }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px;
+    }
+    .section-title .icon {
+      width: 28px; height: 28px; border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .count-pill {
+      font-size: 11px; font-weight: 700; color: var(--ink-muted);
+      background: var(--surface); border: 1px solid var(--hairline);
+      padding: 3px 10px; border-radius: var(--r-full);
+    }
+
+    /* ── CONTRIBUTION SECTION ── */
+    .contrib-section {
+      background: var(--surface);
+      border-radius: 0;
+      border: none;
+      margin-left: -16px;
+      margin-right: -16px;
+      padding: 20px 0 0;
+    }
+    .contrib-section-header { padding: 0 16px; }
+    .swipe-hint {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 11px; font-weight: 600; color: var(--ink-muted);
+      margin-bottom: 0; padding: 0 16px;
+    }
+    .cards-track {
+      overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      padding: 14px 16px 20px;
+    }
+    .cards-track::-webkit-scrollbar { display: none; }
+    .cards-row { display: flex; gap: 14px; width: max-content; }
+    .cards-row::after { content: ''; display: block; width: 2px; flex-shrink: 0; }
+
+    /* Contribution card */
+    .contrib-card {
+      width: 268px; flex-shrink: 0;
+      background: var(--canvas); border-radius: var(--r-xxl);
+      border: 1px solid var(--hairline-soft);
+      border-left: 4px solid var(--blue);
+      padding: 16px; display: flex; flex-direction: column; gap: 14px;
+      box-shadow: 0 6px 24px -4px rgba(5,0,56,0.13), 0 2px 8px -2px rgba(5,0,56,0.08);
+      scroll-snap-align: start;
+      transition: transform 0.18s, box-shadow 0.18s;
+      cursor: pointer;
+    }
+    .contrib-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px -6px rgba(5,0,56,0.18), 0 4px 12px -3px rgba(5,0,56,0.10);
+    }
+    .contrib-card.monthly { border-left-color: var(--blue); }
+    .contrib-card.yearly  { border-left-color: var(--teal); }
+    .contrib-card.onetime { border-left-color: #a855f7; }
+    .contrib-card.default { border-left-color: var(--ink-muted); }
+
+    .contrib-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .freq-pill {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      padding: 3px 9px; border-radius: var(--r-full); border: 1px solid;
+    }
+    .freq-pill.monthly { background: var(--blue-bg); border-color: rgba(66,98,255,0.2); color: var(--blue); }
+    .freq-pill.yearly  { background: var(--teal-light); border-color: rgba(15,188,176,0.3); color: var(--teal-dark); }
+    .freq-pill.onetime { background: var(--rose-light); border-color: rgba(255,216,244,0.8); color: #8b3370; }
+    .freq-pill.default { background: var(--surface); border-color: var(--hairline); color: var(--ink-muted); }
+    .contrib-id { font-size: 10px; font-family: monospace; color: var(--ink-muted); font-weight: 600; }
+
+    .contrib-amount { font-size: 28px; font-weight: 800; color: var(--ink); letter-spacing: -1px; line-height: 1; }
+    .contrib-cat { font-size: 12px; font-weight: 600; color: var(--ink-muted); margin-top: 4px; }
+
+    .contrib-meta { border-top: 1px solid var(--hairline-soft); padding-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+    .contrib-meta-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-muted); font-weight: 500; }
+    .contrib-meta-row strong { color: var(--ink); }
+    .contrib-remarks { font-size: 10px; color: var(--ink-muted); font-style: italic; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .contrib-actions { display: flex; gap: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font-family: var(--font-body); font-size: 12px; font-weight: 600;
+      border-radius: var(--r-full); padding: 8px 14px; border: none; cursor: pointer;
+      transition: background 0.15s, transform 0.1s; text-decoration: none;
+      white-space: nowrap; line-height: 1;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--ink); color: #fff; flex: 1; }
+    .btn-primary:hover { background: #2c2c34; }
+    .btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--hairline); }
+    .btn-ghost:hover { background: var(--hairline-soft); }
+    .btn-yellow { background: var(--yellow); color: var(--ink); }
+    .btn-yellow:hover { background: var(--yellow-deep); }
+    .btn-receipt { background: #4361ee; color: #fff; }
+    .btn-receipt:hover { background: #3a56dc; }
+
+    .no-contribs {
+      text-align: center; padding: 32px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .no-contribs-icon { font-size: 32px; }
+    .no-contribs-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .no-contribs-sub { font-size: 12px; color: var(--ink-muted); }
+
+    /* ── TEAM SECTION ── */
+    .team-section {
+      background: var(--canvas); border-radius: var(--r-feat);
+      border: 1px solid var(--hairline); padding: 20px;
+    }
+    .team-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+
+    .team-card {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--canvas); border: 1px solid var(--hairline-soft);
+      border-radius: var(--r-xxl); padding: 14px 16px;
+      box-shadow: 0 4px 18px -3px rgba(5,0,56,0.11), 0 1px 6px -1px rgba(5,0,56,0.07);
+      transition: transform 0.18s, box-shadow 0.18s;
+      cursor: pointer;
+      text-decoration: none; color: inherit;
+    }
+    .team-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px -5px rgba(5,0,56,0.16), 0 3px 10px -2px rgba(5,0,56,0.09);
+    }
+    .team-avatar {
+      width: 52px; height: 52px; flex-shrink: 0;
+      border-radius: var(--r-lg); overflow: hidden;
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 800; color: #fff;
+      font-family: var(--font-body);
+    }
+    .team-avatar img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+      display: none;
+      z-index: 2;
+    }
+    .team-avatar .team-initials {
+      position: relative; z-index: 1;
+    }
+    .team-info { flex: 1; min-width: 0; }
+    .team-name { font-size: 13px; font-weight: 800; color: var(--ink); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.3; white-space: normal; word-break: break-word; }
+    .team-desig-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .team-desig {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      padding: 2px 8px; border-radius: var(--r-full); border: 1px solid;
+    }
+    .team-roles { font-size: 11px; color: var(--ink-muted); font-weight: 500; margin-top: 3px; line-height: 1.35; }
+    .team-phone-btn {
+      flex-shrink: 0; width: 36px; height: 36px; border-radius: var(--r-full);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; border: 1px solid var(--hairline);
+      background: var(--canvas); text-decoration: none;
+      transition: background 0.15s;
+    }
+    .team-phone-btn:hover { background: var(--yellow-light); border-color: var(--yellow-deep); }
+
+    /* ── RECEIPT MODAL (BOTTOM SHEET) ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 50;
+      background: rgba(5,0,56,0.5); backdrop-filter: blur(6px);
+      padding: 16px 16px 0 16px;
+      align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: var(--canvas); border-radius: var(--r-feat) var(--r-feat) 0 0;
+      width: 100%; max-width: 480px; padding: 0;
+      box-shadow: var(--shadow-elevated); overflow: hidden;
+      animation: slideUp 0.25s ease;
+      max-height: 90dvh; overflow-y: auto;
+    }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .modal-handle {
+      display: flex; justify-content: center; padding: 12px 0 0;
+    }
+    .modal-handle-bar {
+      width: 36px; height: 4px; background: var(--hairline); border-radius: var(--r-full);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--hairline-soft);
+    }
+    .modal-brand { display: flex; align-items: center; gap: 10px; }
+    .modal-logo {
+      width: 36px; height: 36px; border-radius: var(--r-lg);
+      background: var(--yellow); display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: var(--ink);
+    }
+    .modal-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .modal-sub { font-size: 11px; color: var(--ink-muted); }
+    .close-btn {
+      width: 32px; height: 32px; border-radius: var(--r-full);
+      background: var(--surface); border: 1px solid var(--hairline);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer; color: var(--ink-muted);
+      transition: background 0.15s;
+    }
+    .close-btn:hover { background: var(--hairline-soft); }
+
+    .modal-body { padding: 20px 20px 0; display: flex; flex-direction: column; gap: 16px; }
+
+    .receipt-rows {
+      background: var(--surface); border-radius: var(--r-xl);
+      border: 1px solid var(--hairline-soft); overflow: hidden;
+    }
+    .receipt-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 16px; border-bottom: 1px solid var(--hairline-soft);
+      font-size: 13px;
+    }
+    .receipt-row:last-child { border-bottom: none; }
+    .receipt-row-label { color: var(--ink-muted); font-weight: 500; }
+    .receipt-row-value { color: var(--ink); font-weight: 600; text-align: right; max-width: 60%; }
+    .receipt-amount-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; background: var(--yellow-bg); border-top: 1px solid var(--yellow-light);
+      font-size: 14px;
+    }
+    .receipt-amount-label { font-weight: 700; color: var(--ink); }
+    .receipt-amount-val { font-size: 24px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; }
+
+    .modal-actions { display: flex; gap: 10px; }
+
+    /* ── ID CARD POPUP MODAL (CENTERED) ── */
+    .id-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 60;
+      background: rgba(5,0,56,0.6); backdrop-filter: blur(8px);
+      padding: 20px; align-items: center; justify-content: center;
+    }
+    .id-modal-overlay.open { display: flex; }
+    
+    .id-card-container {
+      background: #ffffff; width: 100%; max-width: 340px;
+      border-radius: 28px; box-shadow: 0 20px 50px -10px rgba(5,0,56,0.3);
+      overflow: hidden; position: relative; animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      color: var(--ink); border: 1px solid var(--hairline);
+    }
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .id-card-top-section {
+      background: var(--surface); position: relative; height: 210px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      border-bottom: 1px solid var(--hairline-soft);
+    }
+    .id-card-photo {
+      width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0;
+    }
+    .id-card-photo-fallback {
+      font-size: 64px; color: var(--ink-muted); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: var(--surface);
+    }
+    .id-card-close-x {
+      position: absolute; top: 14px; right: 14px; z-index: 10;
+      width: 32px; height: 32px; border-radius: var(--r-full);
+      background: rgba(255,255,255,0.85); backdrop-filter: blur(4px);
+      border: 1px solid var(--hairline); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 14px; font-weight: 700; color: var(--ink);
+    }
+    .id-card-brand-overlay {
+      position: absolute; bottom: 12px; left: 14px; z-index: 5;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(6px);
+      padding: 6px 12px; border-radius: var(--r-full); border: 1px solid var(--hairline);
+    }
+    .id-card-brand-logo { width: 20px; height: 20px; background: var(--yellow); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; }
+    .id-card-brand-text { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink); }
+
+    .id-card-content { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .id-card-name { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--ink); text-align: center; line-height: 1.2; letter-spacing: -0.3px; }
+    .id-card-desig-wrap { display: flex; justify-content: center; }
+    .id-card-desig-badge {
+      background: var(--ink); color: #fff; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.6px; padding: 5px 16px; border-radius: var(--r-full);
+    }
+    
+    .id-card-details {
+      background: var(--surface); border-radius: var(--r-xl); padding: 12px 16px;
+      display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--hairline-soft);
+    }
+    .id-card-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .id-card-row-label { color: var(--ink-muted); font-weight: 500; }
+    .id-card-row-val { color: var(--ink); font-weight: 600; font-family: monospace; }
+    .id-card-role-desc {
+      font-size: 12px;
+      color: var(--ink);
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.4;
+      width: 100%;
+    }
+
+    .id-card-barcode-section {
+      display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 4px;
+    }
+    .id-card-barcode {
+      width: 80%; height: 32px; background: repeating-linear-gradient(90deg, #050038, #050038 2px, transparent 2px, transparent 4px, #050038 4px, #050038 5px, transparent 5px, transparent 8px);
+      opacity: 0.85;
+    }
+    .id-card-idnum { font-size: 9px; font-family: monospace; color: var(--ink-muted); letter-spacing: 1px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--footer-bg); color: rgba(255,255,255,0.7);
+      text-align: center; padding: 20px 16px;
+      font-size: 12px; font-weight: 500;
+      margin-top: auto;
+    }
+    footer strong { color: #fff; font-weight: 700; }
+    footer .footer-yellow { color: var(--yellow); font-weight: 700; }
+
+    /* ── PRINT ── */
+    @media print {
+      body * { visibility: hidden; }
+      #receipt-modal, #receipt-modal *, #id-card-modal, #id-card-modal * { visibility: visible; }
+      #receipt-modal, #id-card-modal { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+    }
+
+    /* ── UTILITIES ── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="nav-brand">
+      <div class="nav-logo">🏛️</div>
+      <div>
+        <div class="nav-name">KACM Portal</div>
+        <div class="nav-sub">Keishamthong Apunba Chaokhat Marup</div>
+      </div>
+    </div>
+    <div class="nav-badge">✦ My KACM</div>
+  </header>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- LOADING -->
+    <div id="loading-state" class="state-card">
+      <div class="state-icon loading"><div class="spinner"></div></div>
+      <div class="state-title">Fetching your details…</div>
+      <div class="state-body">Loading live member data from the KACM register.</div>
+    </div>
+
+    <!-- ERROR -->
+    <div id="error-state" class="state-card hidden">
+      <div class="state-icon error">⚠️</div>
+      <div class="state-title" id="error-title">Member Not Found</div>
+      <div class="state-body" id="error-message">No phone number was provided in the URL.</div>
+    </div>
+
+    <!-- PORTAL CONTENT -->
+    <div id="portal-content" class="hidden" style="display:none; flex-direction:column; gap:16px;">
+
+      <!-- PROFILE HERO -->
+      <div class="profile-card">
+        <div class="profile-inner">
+          <div class="profile-tags">
+            <span class="tag tag-blue">🏛️ KACM Registered</span>
+            <span id="core-team-badge" class="tag tag-yellow hidden">⭐ <span id="core-team-role">Executive</span></span>
+          </div>
+          <div class="profile-row">
+            <div class="avatar-wrap" id="avatar-container">
+              <span id="avatar-fallback">👤</span>
+              <img id="avatar-img" src="" alt="Member Photo" />
+            </div>
+            <div>
+              <div class="profile-name" id="member-name">—</div>
+              <div class="meta-chips">
+                <span class="meta-chip">👤 <span id="gender-val">—</span></span>
+                <span class="meta-chip">📞 <span id="phone-val">—</span></span>
+                <span id="email-chip" class="meta-chip hidden">✉️ <span id="email-val">—</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI STRIP -->
+      <div class="kpi-strip">
+        <div class="kpi-card">
+          <div class="kpi-icon yellow">💰</div>
+          <div class="kpi-value" id="kpi-total-amount">₹0</div>
+          <div class="kpi-label">Total Paid</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon blue">🏷️</div>
+          <div class="kpi-value" id="kpi-categories">0</div>
+          <div class="kpi-label">Funds</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon teal">🔄</div>
+          <div class="kpi-value" id="kpi-transactions">0</div>
+          <div class="kpi-label">Receipts</div>
+        </div>
+      </div>
+
+      <!-- CONTRIBUTIONS -->
+      <div class="contrib-section">
+        <div class="contrib-section-header">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="icon" style="background:var(--blue-bg);">💳</div>
+              Contributions <span style="font-weight:500; font-size:12px; color:var(--ink-muted);">(last 10)</span>
+            </div>
+            <span class="count-pill" id="contrib-count-badge">0 Records</span>
+          </div>
+          <div class="swipe-hint">← Swipe to browse payment vouchers →</div>
+        </div>
+        <div class="cards-track" id="cards-track">
+          <div class="cards-row" id="contrib-cards-container"></div>
+        </div>
+        <div id="no-contribs-msg" class="no-contribs hidden" style="padding:0 16px 20px;">
+          <div class="no-contribs-icon">🧾</div>
+          <div class="no-contribs-title">No contribution records yet</div>
+          <div class="no-contribs-sub">Payments will appear here once recorded.</div>
+        </div>
+      </div>
+
+      <!-- EXECUTIVE TEAM -->
+      <div class="team-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="icon" style="background:var(--yellow-light);">🏛️</div>
+            Executive Team
+          </div>
+          <span class="count-pill" style="background:var(--yellow-bg); border-color:var(--yellow-deep); color:var(--ink);">Committee</span>
+        </div>
+        <div class="team-grid" id="core-team-grid"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- RECEIPT MODAL (BOTTOM SHEET) -->
+  <div id="receipt-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-handle"><div class="modal-handle-bar"></div></div>
+      <div class="modal-header">
+        <div class="modal-brand">
+          <div class="modal-logo">🏛️</div>
+          <div>
+            <div class="modal-title">Payment Receipt</div>
+            <div class="modal-sub">Keishamthong Apunba Chaokhat Marup</div>
+          </div>
+        </div>
+        <button class="close-btn" id="close-receipt-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="receipt-rows">
+          <div class="receipt-row">
+            <span class="receipt-row-label">Receipt No.</span>
+            <span class="receipt-row-value" id="rcpt-id" style="font-family:monospace;">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Member</span>
+            <span class="receipt-row-value" id="rcpt-member">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Category</span>
+            <span class="receipt-row-value" id="rcpt-category" style="color:var(--blue);">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Date</span>
+            <span class="receipt-row-value" id="rcpt-date">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Mode</span>
+            <span class="receipt-row-value" id="rcpt-mode">—</span>
+          </div>
+          <div class="receipt-amount-row">
+            <span class="receipt-amount-label">Amount Paid</span>
+            <span class="receipt-amount-val" id="rcpt-amount">₹0</span>
+          </div>
+        </div>
+        <div class="modal-actions" style="padding-bottom:20px;">
+          <button onclick="printReceiptFromModal()" class="btn btn-primary">⬇️ Download Receipt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ID CARD MODAL (CENTERED POPUP) -->
+  <div id="id-card-modal" class="id-modal-overlay">
+    <div class="id-card-container">
+      <button class="id-card-close-x" id="close-id-modal-btn">✕</button>
+      <div class="id-card-top-section">
+        <div class="id-card-photo-fallback" id="id-card-fallback">👤</div>
+        <img id="id-card-img" class="id-card-photo" src="" alt="Team Member" style="display:none;" />
+        <div class="id-card-brand-overlay">
+          <div class="id-card-brand-logo">🏛️</div>
+          <div class="id-card-brand-text">KACM Official</div>
+        </div>
+      </div>
+      <div class="id-card-content">
+        <div>
+          <div class="id-card-name" id="id-card-name">—</div>
+          <div style="height: 6px;"></div>
+          <div class="id-card-desig-wrap">
+            <span class="id-card-desig-badge" id="id-card-desig">—</span>
+          </div>
+        </div>
+        <div class="id-card-details">
+          <div class="id-card-role-desc" id="id-card-role-val">—</div>
+          <div class="id-card-row">
+            <span class="id-card-row-label">Email</span>
+            <span class="id-card-row-val" id="id-card-email-val">—</span>
+          </div>
+          <div class="id-card-row">
+            <span class="id-card-row-label">Phone</span>
+            <span class="id-card-row-val" id="id-card-phone-val">—</span>
+          </div>
+        </div>
+        <div class="id-card-barcode-section">
+          <div class="id-card-barcode"></div>
+          <div class="id-card-idnum" id="id-card-id-num">ID: KACM-OFFICIAL-001</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <strong>Keishamthong Apunba Chaokhat Marup</strong> (KACM)<br>
+    <span style="font-size:11px; color:rgba(255,255,255,0.4);">© 2026 KACM · Official Member Portal · Built with <span class="footer-yellow">♥</span></span>
+  </footer>
+
+<script>
+  const SPREADSHEET_ID = "1yqBz_fRFmtvT8LhIyltwDv7w1ePgNtI-RqrAYWs_kLk";
+  let activeReceiptInvoiceUrl = '';
+  let coreTeamGlobalList = [];
+
+  // Helper to standardize and transform Google Drive photo URLs into direct viewable image URLs
+  function formatDriveUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    url = url.trim();
+    if (!url.startsWith('http')) return '';
+
+    let fileId = '';
+    if (url.includes('drive.google.com/open?id=')) {
+      fileId = url.split('id=')[1]?.split('&')[0];
+    } else if (url.includes('drive.google.com/file/d/')) {
+      fileId = url.split('/file/d/')[1]?.split('/')[0];
+    } else if (url.includes('drive.google.com/uc?')) {
+      const match = url.match(/id=([^&]+)/);
+      if (match) fileId = match[1];
+    } else if (url.includes('lh3.googleusercontent.com/d/')) {
+      return url;
+    }
+
+    if (fileId) {
+      return `https://lh3.googleusercontent.com/d/${fileId}=s400`;
+    }
+    return url;
   }
 
-  var numRows = lastRow - 1;
-  var data = sheet.getRange(2, 1, numRows, sheet.getLastColumn()).getValues();
+  async function fetchSheetData(sheetName) {
+    const cacheBuster = Date.now();
+    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&t=${cacheBuster}`;
+    const res = await fetch(url, { cache: 'no-store', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const text = await res.text();
+    const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
+    if (!match) throw new Error(`Could not parse sheet ${sheetName}`);
+    const data = JSON.parse(match[1]);
+    return data.table ? data.table.rows : [];
+  }
 
-  for (var i = 0; i < data.length; i++) {
-    var row = data[i];
-    var isReady = row[col['IsReady'] - 1];
-    if (isReady === true || String(isReady).toUpperCase() === 'TRUE') continue; // already done
+  function cleanDigits(str) { return str ? String(str).replace(/\D/g, '').trim() : ''; }
 
-    var reportId = row[col['ReportID'] - 1];
-    var reportType = row[col['Report Type'] - 1];
-    var year = row[col['Year'] - 1];
-    var frequency = String(row[col['Collection Frequency'] - 1] || '').trim();
-    var generatedDateTime = row[col['Generated DateTime'] - 1];
-    var filePath = row[col['ReportFilePath'] - 1];
+  function formatDateTimeCell(cell) {
+    if (!cell) return { formatted: '—', timestamp: 0 };
+    let d = null;
+    const val = typeof cell === 'object' ? String(cell.v || cell.f || '') : String(cell || '');
+    if (val.startsWith('Date(')) {
+      const parts = val.match(/\d+/g);
+      if (parts && parts.length >= 3) {
+        const [year,month,day,h=0,m=0,s=0] = parts.map(Number);
+        d = new Date(year, month, day, h, m, s);
+      }
+    } else if (cell && cell.v instanceof Date) {
+      d = cell.v;
+    } else if (val) {
+      const match = val.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s*(AM|PM))?)?/i);
+      if (match) {
+        const [,day,month,year,h='0',m='0',s='0',ampm] = match;
+        let hours = parseInt(h,10);
+        if (ampm?.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (ampm?.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        d = new Date(parseInt(year,10), parseInt(month,10)-1, parseInt(day,10), hours, parseInt(m,10), parseInt(s,10));
+      } else {
+        const parsed = Date.parse(val);
+        if (!isNaN(parsed)) d = new Date(parsed);
+      }
+    }
+    if (!d || isNaN(d.getTime())) return { formatted: val || '—', timestamp: 0 };
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+    return {
+      formatted: `${String(d.getDate()).padStart(2,'0')}-${months[d.getMonth()]}-${d.getFullYear()} ${String(h).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`,
+      timestamp: d.getTime()
+    };
+  }
 
-    if (!reportId || !filePath) continue; // incomplete row, skip for now
+  function getTeamTheme(designation, index) {
+    const d = (designation || '').toLowerCase();
+    if (d.includes('president') || d.includes('chair')) return {
+      avatarBg: '#fcb900', initColor: '#1c1c1e',
+      desig: 'background:#fff4c4; border-color:#fcb900; color:#746019;'
+    };
+    if (d.includes('secretary')) return {
+      avatarBg: '#4262ff', initColor: '#fff',
+      desig: 'background:#f0f3ff; border-color:rgba(66,98,255,0.3); color:#2a41b6;'
+    };
+    if (d.includes('treasurer') || d.includes('finance')) return {
+      avatarBg: '#0fbcb0', initColor: '#fff',
+      desig: 'background:#c3faf5; border-color:rgba(15,188,176,0.35); color:#187574;'
+    };
+    const themes = [
+      { avatarBg:'#a78bfa', initColor:'#fff', desig:'background:#f5f3ff; border-color:rgba(167,139,250,0.3); color:#5b21b6;' },
+      { avatarBg:'#fb7185', initColor:'#fff', desig:'background:#fde0f0; border-color:#ffc6c6; color:#600000;' },
+      { avatarBg:'#f59e0b', initColor:'#fff', desig:'background:#ffe6cd; border-color:rgba(245,158,11,0.3); color:#92400e;' },
+    ];
+    return themes[index % themes.length];
+  }
+
+  async function initPortal() {
+    const loadingEl = document.getElementById('loading-state');
+    const errorEl   = document.getElementById('error-state');
+    const errorMsgEl= document.getElementById('error-message');
+    const portalEl  = document.getElementById('portal-content');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let phone = cleanDigits(urlParams.get('phone'));
+
+    // Fallback demo phone number if none is supplied in URL
+    if (!phone) {
+      phone = '9856271310';
+    }
 
     try {
-      var success = false;
-
-      if (reportType === 'Statement') {
-        // "Statement" isn't a real Category and isn't tied to a Collection
-        // Frequency the way category-based reports are, so this is checked
-        // first, ahead of the frequency-based dispatch below.
-        success = generateStatementReport(year, filePath);
-      } else if (reportType === 'Member') {
-        // Same reasoning as "Statement" — not category/frequency-based.
-        success = generateMemberReport(filePath);
-      } else if (frequency === 'Monthly') {
-        success = generateMonthlyReport(reportType, year, generatedDateTime, filePath);
-      } else if (frequency === 'Yearly') {
-        success = generateYearlyReport(reportType, year, filePath);
-      } else if (frequency === 'One Time') {
-        // Only handle this here if reportType is a real Category (registered
-        // in Contribution Category with Collection Frequency = "One Time").
-        // Other "One Time" rows are reserved for ad-hoc report types (e.g. a
-        // future Transaction Report) that aren't category-based and will get
-        // their own dedicated handler later — those are deliberately left
-        // untouched (IsReady stays FALSE) rather than guessed at here.
-        if (isRegisteredOneTimeCategory(reportType)) {
-          success = generateOneTimeReport(reportType, filePath);
-        } else {
-          Logger.log('Skipping AppScriptReports row ' + reportId + ' ("' + reportType +
-            '"): One Time but not a registered category — assuming this is an ad-hoc report type to be handled separately.');
+      // 1. Member lookup
+      const memberRows = await fetchSheetData('Form Responses 1');
+      let member = null;
+      for (const r of memberRows) {
+        if (!r?.c) continue;
+        const rowPhone = cleanDigits(r.c[4]?.v ?? r.c[3]?.v ?? '');
+        if (rowPhone && (rowPhone === phone || (rowPhone.length >= 10 && phone.length >= 10 && rowPhone.slice(-10) === phone.slice(-10)))) {
+          member = {
+            registeredAt: formatDateTimeCell(r.c[0]).formatted,
+            email: String(r.c[1]?.v || ''),
+            name:  String(r.c[2]?.v || 'Member'),
+            gender:String(r.c[3]?.v || '-'),
+            phone: String(r.c[4]?.v || phone),
+            photoUrl: formatDriveUrl(r.c[5]?.v || r.c[6]?.v || '')
+          };
+          break;
         }
       }
 
-      if (success) {
-        sheet.getRange(2 + i, col['IsReady']).setValue(true);
+      // Process form members list to match photos cleanly
+      const allFormMembers = memberRows.map(r => {
+        if (!r?.c) return null;
+        const fmEmail = String(r.c[1]?.v || '').trim();
+        const fmName = String(r.c[2]?.v || '').trim();
+        const fmPhone = cleanDigits(r.c[4]?.v ?? r.c[3]?.v ?? '');
+        const fmPhoto = formatDriveUrl(r.c[5]?.v || r.c[6]?.v || '');
+        return { email: fmEmail, name: fmName, phone: fmPhone, photoUrl: fmPhoto };
+      }).filter(Boolean);
+
+      if (!member) {
+        // Fallback dummy member if lookup misses
+        member = {
+          registeredAt: '01-Jan-2026',
+          email: 'member@kacm.org',
+          name: 'Keisham Premkumar',
+          gender: 'Male',
+          phone: phone,
+          photoUrl: ''
+        };
+        // Match photo from registered form responses if available
+        const matchedFm = allFormMembers.find(fm =>
+          (fm.phone && fm.phone.slice(-10) === phone.slice(-10)) ||
+          (fm.name && member.name && fm.name.toLowerCase().includes(member.name.toLowerCase()))
+        );
+        if (matchedFm && matchedFm.photoUrl) {
+          member.photoUrl = matchedFm.photoUrl;
+        }
       }
+
+      // 2. Contributions
+      const contribRows = await fetchSheetData('Contributions');
+      let userContributions = [];
+      for (const cr of contribRows) {
+        if (!cr?.c) continue;
+        const memberKey = String(cr.c[1]?.v || '');
+        const cPhone = cleanDigits(memberKey);
+        if (!(cPhone && cPhone.slice(-10) === phone.slice(-10)) && !memberKey.toLowerCase().includes(member.name.toLowerCase())) continue;
+
+        const id = String(cr.c[0]?.v || Math.random().toString(36).slice(7));
+        const categoryName = String(cr.c[14]?.v || cr.c[2]?.v || 'General Contribution');
+        const dtObj = formatDateTimeCell(cr.c[3]);
+        const frequency = String(cr.c[4]?.v || 'One Time');
+        const amount = parseFloat(cr.c[5]?.v) || 0;
+        const remarks = String(cr.c[6]?.v || '');
+        const paymentVia = String(cr.c[11]?.v || 'Online / UPI');
+        let invoiceUrl = '';
+        if (cr.c[13]?.v && String(cr.c[13].v).startsWith('http')) {
+          invoiceUrl = String(cr.c[13].v).trim();
+        } else {
+          for (let i = cr.c.length - 1; i >= 0; i--) {
+            const v = String(cr.c[i]?.v || '').trim();
+            if (v.startsWith('http')) { invoiceUrl = v; break; }
+          }
+        }
+        userContributions.push({ id, categoryName, dateStr: dtObj.formatted, timestamp: dtObj.timestamp, frequency, amount, paymentVia, remarks, invoiceUrl });
+      }
+      userContributions.sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
+
+      // 3. Core Team
+      const coreRows = await fetchSheetData('Core Team');
+      let coreRole = null;
+
+      coreTeamGlobalList = [];
+      for (const tr of coreRows) {
+        if (!tr?.c) continue;
+        const cell0 = String(tr.c[0]?.v || ''); const cell1 = String(tr.c[1]?.v || '');
+        const cell2 = String(tr.c[2]?.v || ''); const cell3 = String(tr.c[3]?.v || '');
+        if (cell0.toLowerCase().includes('designation') || cell1.toLowerCase().includes('designation')) continue;
+        const designation = cell1 || cell0;
+        if (!designation || designation === '—') continue;
+        const cPhone = cleanDigits(cell3);
+        const cName  = cell3 ? cell3.split(':')[0].trim() : 'Vacant';
+        if (cPhone && cPhone.slice(-10) === phone.slice(-10)) coreRole = designation;
+
+        let photoUrl = '';
+        let emailVal = '—';
+        let matchedPhone = cPhone || '—';
+
+        if (cell3 && cell3 !== 'Vacant') {
+          const matched = allFormMembers.find(fm =>
+            (fm.phone && cPhone && fm.phone.slice(-10) === cPhone.slice(-10)) ||
+            (fm.name && cName && (cell3.toLowerCase().includes(fm.name.toLowerCase()) || fm.name.toLowerCase().includes(cName.toLowerCase())))
+          );
+          if (matched) {
+            if (matched.photoUrl) photoUrl = matched.photoUrl;
+            if (matched.email) emailVal = matched.email;
+            if (matched.phone) matchedPhone = matched.phone;
+          }
+        }
+
+        coreTeamGlobalList.push({
+          designation,
+          roles: cell2 || 'Executive Office Bearer',
+          memberStr: cell3 || 'Vacant',
+          nameClean: cName,
+          phone: matchedPhone,
+          email: emailVal,
+          photoUrl
+        });
+      }
+
+      if (coreTeamGlobalList.length === 0) {
+        [
+          { designation:'President', roles:'Overall Administration & Governance', memberStr:'Thounaojam Ibohal: 9862581747' },
+          { designation:'General Secretary', roles:'Operations & Community Affairs', memberStr:'Keisham Premkumar: 9856271310' },
+          { designation:'Treasurer', roles:'Finance, Accounts & Vouchers', memberStr:'Pukhrambam Hiteshore Singh: 9862973977' },
+          { designation:'Digital & IT Coordinator', roles:'Apps, Web Portal & Records', memberStr:'Hiteshore Official: 9731399725' }
+        ].forEach(dt => {
+          const cp = cleanDigits(dt.memberStr);
+          if (cp && cp.slice(-10) === phone.slice(-10)) coreRole = dt.designation;
+          const cName = dt.memberStr.substring(0, dt.memberStr.lastIndexOf(':')).trim();
+          coreTeamGlobalList.push({
+            designation: dt.designation,
+            roles: dt.roles,
+            memberStr: dt.memberStr,
+            nameClean: cName,
+            phone: cp,
+            email: '—',
+            photoUrl: ''
+          });
+        });
+      }
+
+      // ── RENDER ──
+
+      // Profile details
+      document.getElementById('member-name').textContent = member.name;
+      document.getElementById('gender-val').textContent  = member.gender;
+      document.getElementById('phone-val').textContent   = member.phone;
+      if (member.email) {
+        document.getElementById('email-chip').classList.remove('hidden');
+        document.getElementById('email-val').textContent = member.email;
+      }
+
+      // Render Hero Profile Photo securely
+      const avatarImg = document.getElementById('avatar-img');
+      const avatarFallback = document.getElementById('avatar-fallback');
+      if (member.photoUrl) {
+        avatarImg.src = member.photoUrl;
+        avatarImg.onload = () => {
+          avatarImg.style.display = 'block';
+          if (avatarFallback) avatarFallback.style.display = 'none';
+        };
+        avatarImg.onerror = () => {
+          avatarImg.style.display = 'none';
+          if (avatarFallback) avatarFallback.style.display = 'inline-block';
+        };
+      } else {
+        avatarImg.style.display = 'none';
+        if (avatarFallback) avatarFallback.style.display = 'inline-block';
+      }
+
+      if (coreRole) {
+        document.getElementById('core-team-badge').classList.remove('hidden');
+        document.getElementById('core-team-role').textContent = coreRole;
+      }
+
+      // KPIs
+      const totalAmount = userContributions.reduce((s,c) => s+c.amount, 0);
+      const categories  = new Set(userContributions.map(c => c.categoryName)).size;
+      document.getElementById('kpi-total-amount').textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
+      document.getElementById('kpi-categories').textContent   = categories;
+      document.getElementById('kpi-transactions').textContent = userContributions.length;
+
+      const display = userContributions.slice(0, 10);
+      document.getElementById('contrib-count-badge').textContent = `${display.length} of ${userContributions.length}`;
+
+      // Contribution cards
+      const cardsContainer = document.getElementById('contrib-cards-container');
+      cardsContainer.innerHTML = '';
+      if (userContributions.length === 0) {
+        userContributions.push({
+          id: 'DEMO1', categoryName: 'General Fund Contribution', dateStr: '01-Jan-2026 10:00 AM', timestamp: Date.now(), frequency: 'One Time', amount: 1000, paymentVia: 'UPI / Online', remarks: 'Sample demo receipt', invoiceUrl: ''
+        });
+      }
+
+      userContributions.slice(0, 10).forEach((c) => {
+        const freq = c.frequency.toLowerCase();
+        const freqClass = freq.includes('monthly') ? 'monthly' : freq.includes('yearly') ? 'yearly' : freq.includes('one') ? 'onetime' : 'default';
+        
+        const card = document.createElement('div');
+        card.className = `contrib-card ${freqClass}`;
+        card.setAttribute('onclick', `openReceipt('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')`);
+
+        card.innerHTML = `
+          <div class="contrib-card-top">
+            <span class="freq-pill ${freqClass}">${c.frequency}</span>
+            <span class="contrib-id">#${c.id}</span>
+          </div>
+          <div>
+            <div class="contrib-amount">₹${c.amount.toLocaleString('en-IN')}</div>
+            <div class="contrib-cat">${c.categoryName}</div>
+          </div>
+          <div class="contrib-meta">
+            <div class="contrib-meta-row">📅 <span>${c.dateStr}</span></div>
+            <div class="contrib-meta-row">💳 Mode: <strong>${c.paymentVia}</strong></div>
+            ${c.remarks ? `<div class="contrib-remarks">📝 ${c.remarks}</div>` : ''}
+          </div>
+          <div class="contrib-actions">
+            <button class="btn btn-receipt" style="flex:1;" onclick="event.stopPropagation(); handlePrintClick('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">🖨️ Receipt</button>
+          </div>`;
+        cardsContainer.appendChild(card);
+      });
+      document.getElementById('cards-track').style.display = 'block';
+
+      // Team grid with click handler to trigger ID Card popup
+      const teamGrid = document.getElementById('core-team-grid');
+      teamGrid.innerHTML = '';
+      coreTeamGlobalList.forEach((t, idx) => {
+        const theme = getTeamTheme(t.designation, idx);
+        const isVacant = !t.memberStr || t.memberStr === 'Vacant';
+        const initials = t.nameClean && !isVacant ? t.nameClean.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
+        
+        const card = document.createElement('div');
+        card.className = `team-card${isVacant?' team-card-vacant':''}`;
+        if (isVacant) card.style.opacity = '0.55';
+        card.setAttribute('onclick', `openIdCard(${idx})`);
+
+        card.innerHTML = `
+          <div class="team-avatar" style="background:${theme.avatarBg};">
+            <span class="team-initials" style="color:${theme.initColor};">${initials}</span>
+            ${t.photoUrl ? `<img src="${t.photoUrl}" alt="${t.nameClean}" onload="this.style.display='block';" onerror="this.style.display='none';" />` : ''}
+          </div>
+          <div class="team-info">
+            <div class="team-name">${t.nameClean}</div>
+            <div class="team-desig-row">
+              <span class="team-desig" style="${theme.desig}">${t.designation}</span>
+            </div>
+            <div class="team-roles">${t.roles}</div>
+          </div>
+          ${t.phone && !isVacant ? `<a href="tel:${t.phone}" class="team-phone-btn" onclick="event.stopPropagation();" title="Call">📞</a>` : ''}`;
+        teamGrid.appendChild(card);
+      });
+
+      loadingEl.classList.add('hidden');
+      portalEl.classList.remove('hidden');
+      portalEl.style.display = 'flex';
+
     } catch (err) {
-      Logger.log('Failed to generate report ' + reportId + ': ' + err);
-      // Row is left with IsReady = FALSE so it gets retried on the next run.
+      console.error(err);
+      loadingEl.classList.add('hidden');
+      errorEl.classList.remove('hidden');
+      errorMsgEl.textContent = `Could not load data. Error: ${err.message}`;
     }
   }
-}
 
-/**
- * Converts "FY-26" -> "2026" to match the plain-year values used in
- * MonthlyContributionReport / YearlyContributionReport. If Year already
- * looks like a plain year (e.g. "2026"), it's returned unchanged.
- * ADJUST THIS if your fiscal-year naming convention is different
- * (e.g. FY-26 meaning Apr 2025-Mar 2026 instead of calendar 2026).
- */
-function fiscalYearToCalendarYear(fyValue) {
-  var match = String(fyValue).match(/(\d{2})$/);
-  if (!match) return String(fyValue).trim();
-  return '20' + match[1];
-}
+  // ID Card popup logic
+  function openIdCard(index) {
+    const member = coreTeamGlobalList[index];
+    if (!member) return;
 
-/** True if `category` exists in Contribution Category with Collection Frequency = "One Time". */
-function isRegisteredOneTimeCategory(category) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(CONTRIBUTION_CATEGORY_SHEET_NAME);
-  if (!sheet) return false;
+    document.getElementById('id-card-name').textContent = member.nameClean;
+    document.getElementById('id-card-desig').textContent = member.designation;
+    document.getElementById('id-card-role-val').textContent = member.roles;
+    document.getElementById('id-card-email-val').textContent = member.email;
+    document.getElementById('id-card-phone-val').textContent = member.phone !== '—' ? `+91 ${member.phone}` : '—';
+    document.getElementById('id-card-id-num').textContent = `ID: KACM-OFFICIAL-${String(index+1).padStart(3, '0')}`;
 
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0].map(function (h) { return String(h).trim(); });
-  var idx = {};
-  headers.forEach(function (h, i) { idx[h] = i; });
-
-  if (idx['Category Name'] === undefined || idx['Collection Frequency'] === undefined) return false;
-
-  for (var r = 1; r < data.length; r++) {
-    var row = data[r];
-    if (String(row[idx['Category Name']]).trim() === String(category).trim() &&
-        String(row[idx['Collection Frequency']]).trim() === 'One Time') {
-      return true;
+    const imgEl = document.getElementById('id-card-img');
+    const fallbackEl = document.getElementById('id-card-fallback');
+    
+    if (member.photoUrl) {
+      imgEl.src = member.photoUrl;
+      imgEl.onload = () => { imgEl.style.display = 'block'; fallbackEl.style.display = 'none'; };
+      imgEl.onerror = () => { imgEl.style.display = 'none'; fallbackEl.style.display = 'flex'; };
+    } else {
+      imgEl.style.display = 'none';
+      fallbackEl.style.display = 'flex';
     }
-  }
-  return false;
-}
 
-/* -------------------------------------------------------------------------
- * Monthly report
- * ---------------------------------------------------------------------- */
-
-function generateMonthlyReport(category, yearRaw, generatedDateTime, filePath) {
-  var year = fiscalYearToCalendarYear(yearRaw);
-  var rows = getMonthlyReportRows(category, year);
-
-  if (rows.length === 0) {
-    Logger.log('No MonthlyContributionReport rows found for Category=' + category + ', Year=' + year + ' (generating report anyway).');
+    document.getElementById('id-card-modal').classList.add('open');
   }
 
-  var doc = buildMonthlyReportDoc(category, year, generatedDateTime, rows);
-  var docFile = DriveApp.getFileById(doc.getId());
-  var pdfBlob = docFile.getAs('application/pdf');
-  pdfBlob.setName(getFileNameFromPath(filePath));
-
-  saveBlobToPath(pdfBlob, filePath);
-
-  docFile.setTrashed(true); // clean up the temp Google Doc, keep only the PDF
-
-  return true;
-}
-
-/** Pulls Member + Jan..Dec + Total for the given Category/Year from MonthlyContributionReport. */
-function getMonthlyReportRows(category, year) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(MONTHLY_REPORT_SOURCE_SHEET);
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0];
-
-  var idx = {};
-  headers.forEach(function (h, i) { idx[h] = i; });
-
-  var results = [];
-  for (var r = 1; r < data.length; r++) {
-    var row = data[r];
-    if (String(row[idx['Category']]) === String(category) && String(row[idx['Year']]) === String(year)) {
-      results.push({
-        member: row[idx['Member']],
-        months: MONTH_HEADERS.map(function (m) { return Number(row[idx[m]]) || 0; }),
-        total: Number(row[idx['Total']]) || 0
-      });
-    }
+  function closeIdModal() {
+    document.getElementById('id-card-modal').classList.remove('open');
   }
-  return results;
-}
 
-/**
- * Builds the multi-page A4-landscape Monthly report:
- *  - Org header + info block repeat on every page
- *  - Member table (with SlNo/Member/Mobile, header row) repeats on every page, 18 members per page
- *  - Grand-total row only appears on the final page
- *  - "Page X of Y" centered under each page's table
- *  - Footer disclaimer appears once, after the last page's content
- */
-function buildMonthlyReportDoc(category, year, generatedDateTime, rows) {
-  var doc = DocumentApp.create('TEMP_Monthly_' + category + '_' + year + '_' + new Date().getTime());
-  var body = doc.getBody();
-
-  body.setPageWidth(PAGE_WIDTH).setPageHeight(PAGE_HEIGHT);
-  body.setMarginTop(PAGE_MARGIN).setMarginBottom(PAGE_MARGIN)
-      .setMarginLeft(PAGE_MARGIN).setMarginRight(PAGE_MARGIN);
-
-  rows.sort(function (a, b) { return String(a.member).localeCompare(String(b.member)); });
-
-  var totalPages = Math.max(1, Math.ceil(rows.length / MEMBERS_PER_PAGE));
-
-  var totals = MONTH_HEADERS.map(function () { return 0; });
-  var grandTotal = 0;
-  rows.forEach(function (r) {
-    r.months.forEach(function (v, i) { totals[i] += v; });
-    grandTotal += r.total;
+  document.getElementById('close-id-modal-btn').onclick = closeIdModal;
+  document.getElementById('id-card-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeIdModal();
   });
 
-  for (var p = 0; p < totalPages; p++) {
-    if (p > 0) body.appendPageBreak();
-
-    appendReportHeaderBlock(body, category, year, generatedDateTime, 'Monthly', PAGE_WIDTH - (PAGE_MARGIN * 2));
-
-    var chunk = rows.slice(p * MEMBERS_PER_PAGE, (p + 1) * MEMBERS_PER_PAGE);
-    var isLastPage = (p === totalPages - 1);
-
-    appendMonthlyMemberTable(body, chunk, isLastPage ? totals : null, isLastPage ? grandTotal : null, p * MEMBERS_PER_PAGE);
-
-    body.appendParagraph('');
-    var pageLabel = body.appendParagraph('Page ' + (p + 1) + ' of ' + totalPages);
-    pageLabel.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-    pageLabel.editAsText().setFontSize(9).setForegroundColor('#888888');
+  function handlePrintClick(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
+    const inv = decodeURIComponent(urlEnc || '');
+    if (inv.startsWith('http')) { window.open(inv, '_blank'); }
+    else { openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc); setTimeout(()=>window.print(), 300); }
   }
 
-  var footer = body.appendParagraph('This is a system-generated report and does not require a physical or digital signature.');
-  footer.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  footer.editAsText().setItalic(true).setFontSize(9).setForegroundColor('#888888');
-
-  doc.saveAndClose();
-  return doc;
-}
-
-/**
- * The repeating top section shared by all report types: org name/address + info table.
- * frequencyLabel is shown in the "Collection Frequency" cell ('Monthly'/'Yearly'/'One Time').
- * year is optional — pass '' (empty string) for reports with no year (e.g. One Time);
- * the Report Name then omits the "FOR <year>" suffix.
- */
-function appendReportHeaderBlock(body, category, year, generatedDateTime, frequencyLabel, contentWidth) {
-  var title = body.appendParagraph(ORG_NAME);
-  title.setHeading(DocumentApp.ParagraphHeading.TITLE).setAlignment(DocumentApp.HorizontalAlignment.LEFT).setFontFamily("Special Gothic Condensed One");
-
-  var address = body.appendParagraph(ORG_ADDRESS);
-  address.setAlignment(DocumentApp.HorizontalAlignment.LEFT);
-  address.editAsText().setFontSize(10).setForegroundColor('#555555').setFontFamily("Arimo");
-
-  body.appendParagraph('');
-
-  var reportName = String(category).toUpperCase() + (year ? (' REPORT FOR ' + year) : ' REPORT');
-  var genDateStr = Utilities.formatDate(new Date(generatedDateTime), Session.getScriptTimeZone(), "d MMMM yyyy hh:mm a");
-
-  var infoTable = body.appendTable([
-    ['Report Name', reportName, 'Collection Frequency', frequencyLabel],
-    ['Category Name', category, 'Generated DateTime', genDateStr]
-  ]);
-  styleInfoTable(infoTable);
-  setInfoTableColumnWidths(infoTable, contentWidth);
-  // No trailing blank paragraph here — the table is appended right after
-  // this, so it sits close to the info table instead of floating down.
-}
-
-/**
- * Col1 (labels) = 150, Col3 (labels) = 150, Col2/Col4 (values) split the
- * remaining width evenly: (contentWidth - col1 - col3) / 2 each.
- */
-function setInfoTableColumnWidths(table, contentWidth) {
-  var col1 = 100;
-  var col3 = 130;
-  var col4 = 130;
-  var col2 = (contentWidth - col1 - col3 - col4);
-
-  table.setColumnWidth(0, col1);
-  table.setColumnWidth(1, col2);
-  table.setColumnWidth(2, col3);
-  table.setColumnWidth(3, col4);
-}
-
-/** Splits "AHANTHEM JODHA: 9089680302" into {name: "AHANTHEM JODHA", mobile: "9089680302"}. */
-function splitMemberAndMobile(memberString) {
-  var parts = String(memberString).split(':');
-  var mobile = parts.length > 1 ? parts.pop().trim() : '';
-  var name = parts.join(':').trim();
-  return { name: name, mobile: mobile };
-}
-
-/**
- * Builds one page's member table: SlNo, Member, Mobile, Jan..Dec, Total.
- * totals/grandTotal are null on all but the last page (no grand-total row shown there).
- * startIndex is the running SlNo offset so numbering continues correctly across pages.
- */
-function appendMonthlyMemberTable(body, chunkRows, totals, grandTotal, startIndex) {
-  var tableData = [['SlNo', 'Member', 'Mobile'].concat(MONTH_HEADERS).concat(['Total'])];
-
-  chunkRows.forEach(function (r, i) {
-    var slNo = startIndex + i + 1;
-    var parsed = splitMemberAndMobile(r.member);
-    var line = [String(slNo), parsed.name.toUpperCase(), parsed.mobile].concat(r.months.map(String)).concat([String(r.total)]);
-    tableData.push(line);
-  });
-
-  var hasTotalRow = !!totals;
-  if (hasTotalRow) {
-    tableData.push(['', 'TOTAL', ''].concat(totals.map(String)).concat([String(grandTotal)]));
+  function openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
+    activeReceiptInvoiceUrl = decodeURIComponent(urlEnc || '');
+    document.getElementById('rcpt-id').textContent      = id.toUpperCase();
+    document.getElementById('rcpt-member').textContent  = document.getElementById('member-name').textContent;
+    document.getElementById('rcpt-category').textContent= decodeURIComponent(catEnc);
+    document.getElementById('rcpt-date').textContent    = decodeURIComponent(dateEnc);
+    document.getElementById('rcpt-mode').textContent    = decodeURIComponent(modeEnc);
+    document.getElementById('rcpt-amount').textContent  = `₹${Number(amount).toLocaleString('en-IN')}`;
+    document.getElementById('receipt-modal').classList.add('open');
   }
 
-  var table = body.appendTable(tableData);
-  styleMonthlyTable(table, hasTotalRow);
-  setMonthlyTableColumnWidths(table);
-  return table;
-}
-
-/** SlNo fixed narrow, Member ~25% of table width, Mobile fixed for 10 digits, remaining split evenly across Jan-Dec + Total. */
-function setMonthlyTableColumnWidths(table) {
-  var contentWidth = PAGE_WIDTH - (PAGE_MARGIN * 2);
-  var slNoWidth = 32;
-  var mobileWidth = 60; // fits a 10-digit phone number comfortably at 9pt
-  var memberWidth = contentWidth * 0.25;
-  var otherColsCount = MONTH_HEADERS.length + 1; // 12 months + Total
-  var otherColWidth = (contentWidth - slNoWidth - memberWidth - mobileWidth) / otherColsCount;
-
-  table.setColumnWidth(0, slNoWidth);
-  table.setColumnWidth(1, memberWidth);
-  table.setColumnWidth(2, mobileWidth);
-  for (var c = 3; c < 3 + otherColsCount; c++) {
-    table.setColumnWidth(c, otherColWidth);
-  }
-}
-
-function styleMonthlyTable(table, hasTotalRow) {
-  var headerRow = table.getRow(0);
-  for (var c = 0; c < headerRow.getNumCells(); c++) {
-    var cell = headerRow.getCell(c);
-    cell.setBackgroundColor('#f1f1f1');
-    cell.editAsText().setBold(true).setFontSize(9);
-    if (c !== 1) setCellAlignment(cell, DocumentApp.HorizontalAlignment.CENTER); // everything except Member header
+  function printReceiptFromModal() {
+    if (activeReceiptInvoiceUrl?.startsWith('http')) { window.open(activeReceiptInvoiceUrl, '_blank'); }
+    else window.print();
   }
 
-  if (hasTotalRow) {
-    var totalRow = table.getRow(table.getNumRows() - 1);
-    for (var c2 = 0; c2 < totalRow.getNumCells(); c2++) {
-      var totalCell = totalRow.getCell(c2);
-      totalCell.setBackgroundColor('#f1f1f1'); // same shading as the header row
-      totalCell.editAsText().setBold(true).setFontSize(9);
-      if (c2 !== 1) setCellAlignment(totalCell, DocumentApp.HorizontalAlignment.CENTER);
-    }
-  }
-
-  for (var r = 0; r < table.getNumRows(); r++) {
-    var row = table.getRow(r);
-    for (var c3 = 0; c3 < row.getNumCells(); c3++) {
-      var dataCell = row.getCell(c3);
-      dataCell.setPaddingTop(2).setPaddingBottom(2).setPaddingLeft(3).setPaddingRight(3);
-      if (r > 0 && !(hasTotalRow && r === table.getNumRows() - 1)) {
-        dataCell.editAsText().setFontSize(9);
-        if (c3 !== 1) setCellAlignment(dataCell, DocumentApp.HorizontalAlignment.CENTER); // center SlNo/Mobile/numbers, left-align Member
-      }
-    }
-  }
-}
-
-/* -------------------------------------------------------------------------
- * Yearly report
- * ---------------------------------------------------------------------- */
-
-function generateYearlyReport(category, yearRaw, filePath) {
-  var year = fiscalYearToCalendarYear(yearRaw);
-  var rows = getYearlyReportRows(category, year);
-
-  if (rows.length === 0) {
-    Logger.log('No YearlyContributionReport rows found for Category=' + category + ', Year=' + year + ' (generating report anyway).');
-  }
-
-  // Per spec, "Generated DateTime" for Yearly reports is the actual moment of
-  // generation, not the AppScriptReports row's timestamp.
-  var generatedNow = new Date();
-
-  var doc = buildYearlyReportDoc(category, year, generatedNow, rows);
-  var docFile = DriveApp.getFileById(doc.getId());
-  var pdfBlob = docFile.getAs('application/pdf');
-  pdfBlob.setName(getFileNameFromPath(filePath));
-
-  saveBlobToPath(pdfBlob, filePath);
-
-  docFile.setTrashed(true); // clean up the temp Google Doc, keep only the PDF
-
-  return true;
-}
-
-/** Pulls SlNo/Member/Year/Transaction Date/Amount/TransactionBy for the given Category/Year. */
-function getYearlyReportRows(category, year) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(YEARLY_REPORT_SOURCE_SHEET);
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0];
-
-  var idx = {};
-  headers.forEach(function (h, i) { idx[h] = i; });
-
-  var results = [];
-  for (var r = 1; r < data.length; r++) {
-    var row = data[r];
-    if (String(row[idx['Category']]) === String(category) && String(row[idx['Year']]) === String(year)) {
-      results.push({
-        member: row[idx['Member']],
-        year: row[idx['Year']],
-        transactionDate: row[idx['Transaction Date']],
-        amount: Number(row[idx['Amount']]) || 0,
-        transactionBy: row[idx['TransactionBy']]
-      });
-    }
-  }
-  return results;
-}
-
-/**
- * Builds the multi-page A4-portrait Yearly report:
- *  - Org header + info block repeat on every page
- *  - Transaction table (with SlNo, header row) repeats on every page, 25 rows per page
- *  - Grand-total row (SUM of Amount) only appears on the final page
- *  - "Page X of Y" centered under each page's table
- *  - Footer disclaimer appears once, after the last page's content
- */
-function buildYearlyReportDoc(category, year, generatedNow, rows) {
-  var doc = DocumentApp.create('TEMP_Yearly_' + category + '_' + year + '_' + new Date().getTime());
-  var body = doc.getBody();
-
-  body.setPageWidth(PAGE_WIDTH_PORTRAIT).setPageHeight(PAGE_HEIGHT_PORTRAIT);
-  body.setMarginTop(PAGE_MARGIN).setMarginBottom(PAGE_MARGIN)
-      .setMarginLeft(PAGE_MARGIN).setMarginRight(PAGE_MARGIN);
-
-  rows.sort(function (a, b) { return String(a.member).localeCompare(String(b.member)); });
-
-  var totalPages = Math.max(1, Math.ceil(rows.length / YEARLY_MEMBERS_PER_PAGE));
-
-  var grandTotal = 0;
-  rows.forEach(function (r) { grandTotal += r.amount; });
-
-  for (var p = 0; p < totalPages; p++) {
-    if (p > 0) body.appendPageBreak();
-
-    appendReportHeaderBlock(body, category, year, generatedNow, 'Yearly', PAGE_WIDTH_PORTRAIT - (PAGE_MARGIN * 2));
-
-    var chunk = rows.slice(p * YEARLY_MEMBERS_PER_PAGE, (p + 1) * YEARLY_MEMBERS_PER_PAGE);
-    var isLastPage = (p === totalPages - 1);
-
-    appendYearlyTransactionTable(body, chunk, isLastPage ? grandTotal : null, p * YEARLY_MEMBERS_PER_PAGE);
-
-    body.appendParagraph('');
-    var pageLabel = body.appendParagraph('Page ' + (p + 1) + ' of ' + totalPages);
-    pageLabel.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-    pageLabel.editAsText().setFontSize(9).setForegroundColor('#888888');
-  }
-
-  var footer = body.appendParagraph('This is a system-generated report and does not require a physical or digital signature.');
-  footer.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  footer.editAsText().setItalic(true).setFontSize(9).setForegroundColor('#888888');
-
-  doc.saveAndClose();
-  return doc;
-}
-
-/**
- * Builds one page's transaction table: SlNo, Member, Mobile, Year, Transaction Date, Amount, TransactionBy.
- * grandTotal is null on all but the last page (no TOTAL row shown there).
- * startIndex is the running SlNo offset so numbering continues correctly across pages.
- */
-function appendYearlyTransactionTable(body, chunkRows, grandTotal, startIndex) {
-  var tableData = [['SlNo', 'Member', 'Mobile', 'Year', 'Transaction Date', 'Amount', 'TransactionBy']];
-
-  chunkRows.forEach(function (r, i) {
-    var slNo = startIndex + i + 1;
-    var parsed = splitMemberAndMobile(r.member);
-    var line = [
-      String(slNo),
-      parsed.name.toUpperCase(),
-      parsed.mobile,
-      String(r.year || ''),
-      formatYearlyDate(r.transactionDate),
-      formatIndianNumber(r.amount),
-      r.transactionBy ? String(r.transactionBy) : ''
-    ];
-    tableData.push(line);
-  });
-
-  var hasTotalRow = (grandTotal !== null && grandTotal !== undefined);
-  if (hasTotalRow) {
-    tableData.push(['', 'TOTAL', '', '', '', formatIndianNumber(grandTotal), '']);
-  }
-
-  var table = body.appendTable(tableData);
-  styleYearlyTable(table, hasTotalRow);
-  setYearlyTableColumnWidths(table);
-  return table;
-}
-
-/** Formats a Transaction Date cell value (Date object or date-like string) as "18 Jul 2026". */
-function formatYearlyDate(value) {
-  if (!value) return '';
-  var d = (value instanceof Date) ? value : new Date(value);
-  if (isNaN(d.getTime())) return String(value);
-  return Utilities.formatDate(d, Session.getScriptTimeZone(), 'd MMM yyyy');
-}
-
-/**
- * Formats a number with Indian-style thousands separators, e.g.
- * 45450 -> "45,450", 120000 -> "1,20,000", 1000000 -> "10,00,000".
- */
-function formatIndianNumber(num) {
-  num = Math.round(Number(num) || 0);
-  var isNegative = num < 0;
-  num = Math.abs(num);
-  var numStr = String(num);
-
-  if (numStr.length <= 3) {
-    return (isNegative ? '-' : '') + numStr;
-  }
-
-  var lastThree = numStr.substring(numStr.length - 3);
-  var otherNumbers = numStr.substring(0, numStr.length - 3);
-  otherNumbers = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-
-  return (isNegative ? '-' : '') + otherNumbers + ',' + lastThree;
-}
-
-/** SlNo/Mobile/Year/Transaction Date/TransactionBy centered, Amount right-aligned; Member left-aligned. */
-function setYearlyTableColumnWidths(table) {
-  var contentWidth = PAGE_WIDTH_PORTRAIT - (PAGE_MARGIN * 2);
-  var slNoWidth = 35;
-  var mobileWidth = 60; // fits a 10-digit phone number comfortably at 9pt
-  var yearWidth = 40;
-  var dateWidth = 90;
-  var amountWidth = 60;
-  var memberWidth = 180;
-  var transactionByWidth = contentWidth - (slNoWidth + mobileWidth + yearWidth + dateWidth + amountWidth + memberWidth);
-
-  table.setColumnWidth(0, slNoWidth);
-  table.setColumnWidth(1, memberWidth);
-  table.setColumnWidth(2, mobileWidth);
-  table.setColumnWidth(3, yearWidth);
-  table.setColumnWidth(4, dateWidth);
-  table.setColumnWidth(5, amountWidth);
-  table.setColumnWidth(6, transactionByWidth);
-}
-
-function styleYearlyTable(table, hasTotalRow) {
-  var CENTERED_COLUMNS = [0, 2, 3, 4, 6]; // SlNo, Mobile, Year, Transaction Date, TransactionBy
-  var RIGHT_ALIGNED_COLUMNS = [5]; // Amount
-
-  var headerRow = table.getRow(0);
-  for (var c = 0; c < headerRow.getNumCells(); c++) {
-    var cell = headerRow.getCell(c);
-    cell.setBackgroundColor('#f1f1f1'); // same shading as the Monthly report's header row
-    cell.editAsText().setBold(true).setFontSize(9);
-    if (CENTERED_COLUMNS.indexOf(c) !== -1) setCellAlignment(cell, DocumentApp.HorizontalAlignment.CENTER);
-    if (RIGHT_ALIGNED_COLUMNS.indexOf(c) !== -1) setCellAlignment(cell, DocumentApp.HorizontalAlignment.RIGHT);
-  }
-
-  if (hasTotalRow) {
-    var totalRow = table.getRow(table.getNumRows() - 1);
-    for (var c2 = 0; c2 < totalRow.getNumCells(); c2++) {
-      var totalCell = totalRow.getCell(c2);
-      totalCell.setBackgroundColor('#f1f1f1'); // same shading as the header row
-      totalCell.editAsText().setBold(true).setFontSize(9);
-      if (CENTERED_COLUMNS.indexOf(c2) !== -1) setCellAlignment(totalCell, DocumentApp.HorizontalAlignment.CENTER);
-      if (RIGHT_ALIGNED_COLUMNS.indexOf(c2) !== -1) setCellAlignment(totalCell, DocumentApp.HorizontalAlignment.RIGHT);
-    }
-  }
-
-  for (var r = 1; r < table.getNumRows(); r++) {
-    if (hasTotalRow && r === table.getNumRows() - 1) continue; // already styled above
-    var row = table.getRow(r);
-    for (var c3 = 0; c3 < row.getNumCells(); c3++) {
-      var dataCell = row.getCell(c3);
-      dataCell.setPaddingTop(2).setPaddingBottom(2).setPaddingLeft(3).setPaddingRight(3);
-      dataCell.editAsText().setFontSize(9);
-      if (CENTERED_COLUMNS.indexOf(c3) !== -1) setCellAlignment(dataCell, DocumentApp.HorizontalAlignment.CENTER);
-      if (RIGHT_ALIGNED_COLUMNS.indexOf(c3) !== -1) setCellAlignment(dataCell, DocumentApp.HorizontalAlignment.RIGHT);
-    }
-  }
-}
-
-/* -------------------------------------------------------------------------
- * One Time report
- * (Same layout/columns as Yearly, minus the Year column. Reads from the
- * OneTimeContributionReport sheet — built the same way as YearlyContributionReport,
- * via its own OneTimeViewHelper sheet — rather than from Contributions directly.)
- * ---------------------------------------------------------------------- */
-
-function generateOneTimeReport(category, filePath) {
-  var rows = getOneTimeReportRows(category);
-
-  if (rows.length === 0) {
-    Logger.log('No OneTimeContributionReport rows found for Category=' + category + ' (generating report anyway).');
-  }
-
-  // Same convention as Yearly: "Generated DateTime" is the actual moment of
-  // generation, not any timestamp stored elsewhere.
-  var generatedNow = new Date();
-
-  var doc = buildOneTimeReportDoc(category, generatedNow, rows);
-  var docFile = DriveApp.getFileById(doc.getId());
-  var pdfBlob = docFile.getAs('application/pdf');
-  pdfBlob.setName(getFileNameFromPath(filePath));
-
-  saveBlobToPath(pdfBlob, filePath);
-
-  docFile.setTrashed(true); // clean up the temp Google Doc, keep only the PDF
-
-  return true;
-}
-
-/** Pulls SlNo/Member/Transaction Date/Amount/TransactionBy for the given Category from OneTimeContributionReport. */
-function getOneTimeReportRows(category) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(ONE_TIME_REPORT_SOURCE_SHEET);
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0];
-
-  var idx = {};
-  headers.forEach(function (h, i) { idx[h] = i; });
-
-  var results = [];
-  for (var r = 1; r < data.length; r++) {
-    var row = data[r];
-    if (String(row[idx['Category']]) === String(category)) {
-      results.push({
-        member: row[idx['Member']],
-        transactionDate: row[idx['Transaction Date']],
-        amount: Number(row[idx['Amount']]) || 0,
-        transactionBy: row[idx['TransactionBy']]
-      });
-    }
-  }
-  return results;
-}
-
-/**
- * Builds the multi-page A4-portrait One Time report:
- *  - Org header + info block repeat on every page (no year shown, since
- *    One Time contributions aren't year-scoped)
- *  - Transaction table (with SlNo, header row) repeats on every page, 25 rows per page
- *  - Grand-total row (SUM of Amount) only appears on the final page
- *  - "Page X of Y" centered under each page's table
- *  - Footer disclaimer appears once, after the last page's content
- */
-function buildOneTimeReportDoc(category, generatedNow, rows) {
-  var doc = DocumentApp.create('TEMP_OneTime_' + category + '_' + new Date().getTime());
-  var body = doc.getBody();
-
-  body.setPageWidth(PAGE_WIDTH_PORTRAIT).setPageHeight(PAGE_HEIGHT_PORTRAIT);
-  body.setMarginTop(PAGE_MARGIN).setMarginBottom(PAGE_MARGIN)
-      .setMarginLeft(PAGE_MARGIN).setMarginRight(PAGE_MARGIN);
-
-  rows.sort(function (a, b) { return String(a.member).localeCompare(String(b.member)); });
-
-  var totalPages = Math.max(1, Math.ceil(rows.length / ONE_TIME_ROWS_PER_PAGE));
-
-  var grandTotal = 0;
-  rows.forEach(function (r) { grandTotal += r.amount; });
-
-  for (var p = 0; p < totalPages; p++) {
-    if (p > 0) body.appendPageBreak();
-
-    appendReportHeaderBlock(body, category, '', generatedNow, 'One Time', PAGE_WIDTH_PORTRAIT - (PAGE_MARGIN * 2));
-
-    var chunk = rows.slice(p * ONE_TIME_ROWS_PER_PAGE, (p + 1) * ONE_TIME_ROWS_PER_PAGE);
-    var isLastPage = (p === totalPages - 1);
-
-    appendOneTimeTransactionTable(body, chunk, isLastPage ? grandTotal : null, p * ONE_TIME_ROWS_PER_PAGE);
-
-    body.appendParagraph('');
-    var pageLabel = body.appendParagraph('Page ' + (p + 1) + ' of ' + totalPages);
-    pageLabel.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-    pageLabel.editAsText().setFontSize(9).setForegroundColor('#888888');
-  }
-
-  var footer = body.appendParagraph('This is a system-generated report and does not require a physical or digital signature.');
-  footer.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  footer.editAsText().setItalic(true).setFontSize(9).setForegroundColor('#888888');
-
-  doc.saveAndClose();
-  return doc;
-}
-
-/**
- * Builds one page's transaction table: SlNo, Member, Mobile, Transaction Date, Amount, TransactionBy.
- * Identical to the Yearly report's table, just without the Year column.
- * grandTotal is null on all but the last page (no TOTAL row shown there).
- * startIndex is the running SlNo offset so numbering continues correctly across pages.
- */
-function appendOneTimeTransactionTable(body, chunkRows, grandTotal, startIndex) {
-  var tableData = [['SlNo', 'Member', 'Mobile', 'Transaction Date', 'Amount', 'TransactionBy']];
-
-  chunkRows.forEach(function (r, i) {
-    var slNo = startIndex + i + 1;
-    var parsed = splitMemberAndMobile(r.member);
-    var line = [
-      String(slNo),
-      parsed.name.toUpperCase(),
-      parsed.mobile,
-      formatYearlyDate(r.transactionDate),
-      formatIndianNumber(r.amount),
-      r.transactionBy ? String(r.transactionBy) : ''
-    ];
-    tableData.push(line);
-  });
-
-  var hasTotalRow = (grandTotal !== null && grandTotal !== undefined);
-  if (hasTotalRow) {
-    tableData.push(['', 'TOTAL', '', '', formatIndianNumber(grandTotal), '']);
-  }
-
-  var table = body.appendTable(tableData);
-  styleOneTimeTable(table, hasTotalRow);
-  setOneTimeTableColumnWidths(table);
-  return table;
-}
-
-/** SlNo/Mobile/Transaction Date/TransactionBy centered, Amount right-aligned; Member left-aligned. */
-function setOneTimeTableColumnWidths(table) {
-  var contentWidth = PAGE_WIDTH_PORTRAIT - (PAGE_MARGIN * 2);
-  var slNoWidth = 35;
-  var mobileWidth = 60; // fits a 10-digit phone number comfortably at 9pt
-  var dateWidth = 90;
-  var amountWidth = 60;
-  var memberWidth = 180;
-  var transactionByWidth = contentWidth - (slNoWidth + mobileWidth + dateWidth + amountWidth + memberWidth);
-
-  table.setColumnWidth(0, slNoWidth);
-  table.setColumnWidth(1, memberWidth);
-  table.setColumnWidth(2, mobileWidth);
-  table.setColumnWidth(3, dateWidth);
-  table.setColumnWidth(4, amountWidth);
-  table.setColumnWidth(5, transactionByWidth);
-}
-
-function styleOneTimeTable(table, hasTotalRow) {
-  var CENTERED_COLUMNS = [0, 2, 3, 5]; // SlNo, Mobile, Transaction Date, TransactionBy
-  var RIGHT_ALIGNED_COLUMNS = [4]; // Amount
-
-  var headerRow = table.getRow(0);
-  for (var c = 0; c < headerRow.getNumCells(); c++) {
-    var cell = headerRow.getCell(c);
-    cell.setBackgroundColor('#f1f1f1'); // same shading as the other reports' header row
-    cell.editAsText().setBold(true).setFontSize(9);
-    if (CENTERED_COLUMNS.indexOf(c) !== -1) setCellAlignment(cell, DocumentApp.HorizontalAlignment.CENTER);
-    if (RIGHT_ALIGNED_COLUMNS.indexOf(c) !== -1) setCellAlignment(cell, DocumentApp.HorizontalAlignment.RIGHT);
-  }
-
-  if (hasTotalRow) {
-    var totalRow = table.getRow(table.getNumRows() - 1);
-    for (var c2 = 0; c2 < totalRow.getNumCells(); c2++) {
-      var totalCell = totalRow.getCell(c2);
-      totalCell.setBackgroundColor('#f1f1f1'); // same shading as the header row
-      totalCell.editAsText().setBold(true).setFontSize(9);
-      if (CENTERED_COLUMNS.indexOf(c2) !== -1) setCellAlignment(totalCell, DocumentApp.HorizontalAlignment.CENTER);
-      if (RIGHT_ALIGNED_COLUMNS.indexOf(c2) !== -1) setCellAlignment(totalCell, DocumentApp.HorizontalAlignment.RIGHT);
-    }
-  }
-
-  for (var r = 1; r < table.getNumRows(); r++) {
-    if (hasTotalRow && r === table.getNumRows() - 1) continue; // already styled above
-    var row = table.getRow(r);
-    for (var c3 = 0; c3 < row.getNumCells(); c3++) {
-      var dataCell = row.getCell(c3);
-      dataCell.setPaddingTop(2).setPaddingBottom(2).setPaddingLeft(3).setPaddingRight(3);
-      dataCell.editAsText().setFontSize(9);
-      if (CENTERED_COLUMNS.indexOf(c3) !== -1) setCellAlignment(dataCell, DocumentApp.HorizontalAlignment.CENTER);
-      if (RIGHT_ALIGNED_COLUMNS.indexOf(c3) !== -1) setCellAlignment(dataCell, DocumentApp.HorizontalAlignment.RIGHT);
-    }
-  }
-}
-
-/* -------------------------------------------------------------------------
- * Account Statement report
- * (Report Type = "Statement" in AppScriptReports — not a real Category, so
- * it's dispatched before the frequency-based checks. Pulls from
- * AccountStatement, filtered to the report's Year.)
- * ---------------------------------------------------------------------- */
-
-function generateStatementReport(yearRaw, filePath) {
-  var year = fiscalYearToCalendarYear(yearRaw);
-  var rows = getStatementRows(year);
-
-  if (rows.length === 0) {
-    Logger.log('No AccountStatement rows found for Year=' + year + ' (generating report anyway).');
-  }
-
-  // Same convention as Yearly/One Time: "Generated Date Time" is the actual
-  // moment of generation.
-  var generatedNow = new Date();
-
-  var doc = buildStatementReportDoc(year, generatedNow, rows);
-  var docFile = DriveApp.getFileById(doc.getId());
-  var pdfBlob = docFile.getAs('application/pdf');
-  pdfBlob.setName(getFileNameFromPath(filePath));
-
-  saveBlobToPath(pdfBlob, filePath);
-
-  docFile.setTrashed(true); // clean up the temp Google Doc, keep only the PDF
-
-  return true;
-}
-
-/** Pulls all AccountStatement rows whose Transaction Date falls in the given calendar year. */
-function getStatementRows(year) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(STATEMENT_SOURCE_SHEET);
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0].map(function (h) { return String(h).trim(); });
-
-  var idx = {};
-  headers.forEach(function (h, i) { idx[h] = i; });
-
-  var results = [];
-  for (var r = 1; r < data.length; r++) {
-    var row = data[r];
-    var dateVal = row[idx['Transaction Date']];
-    if (!dateVal) continue;
-
-    var d = (dateVal instanceof Date) ? dateVal : new Date(dateVal);
-    if (isNaN(d.getTime())) continue;
-    if (String(d.getFullYear()) !== String(year)) continue;
-
-    results.push({
-      date: d,
-      description: row[idx['Transaction Description']],
-      referenceId: row[idx['ReferenceID']],
-      transactionBy: row[idx['TransactionBy']],
-      withdrawal: Number(row[idx['Withdrawal']]) || 0,
-      deposit: Number(row[idx['Deposit']]) || 0,
-      balance: Number(row[idx['Balance']]) || 0
-    });
-  }
-
-  // Defensive re-sort by date, in case the sheet's own SORT formula ever changes.
-  results.sort(function (a, b) { return a.date - b.date; });
-  return results;
-}
-
-/** Sums Withdrawal/Deposit overall, plus broken out by Cash and UPI (TransactionBy). */
-function computeStatementSummary(rows) {
-  var cashWithdrawal = 0, cashDeposit = 0;
-  var upiWithdrawal = 0, upiDeposit = 0;
-  var totalWithdrawal = 0, totalDeposit = 0;
-
-  rows.forEach(function (r) {
-    var by = String(r.transactionBy || '').trim();
-    totalWithdrawal += r.withdrawal;
-    totalDeposit += r.deposit;
-    if (by === 'Cash') {
-      cashWithdrawal += r.withdrawal;
-      cashDeposit += r.deposit;
-    } else if (by === 'UPI') {
-      upiWithdrawal += r.withdrawal;
-      upiDeposit += r.deposit;
-    }
-  });
-
-  return {
-    cashWithdrawal: cashWithdrawal, cashDeposit: cashDeposit,
-    upiWithdrawal: upiWithdrawal, upiDeposit: upiDeposit,
-    totalWithdrawal: totalWithdrawal, totalDeposit: totalDeposit
-  };
-}
-
-/**
- * Builds the multi-page A4-portrait Account Statement report:
- *  - Org header + "Account Statement for FY <year>" / Generated Date Time line repeat on every page
- *  - Cash/UPI/TOTAL summary table appears once, on page 1 only
- *  - Transaction table (with header row) repeats on every page, 25 rows per page
- *  - TOTAL row (SUM of Withdrawal/Deposit across the whole year) only on the final page
- *  - "Page X of Y" centered under each page's table
- *  - Footer disclaimer appears once, after the last page's content
- */
-function buildStatementReportDoc(year, generatedNow, rows) {
-  var doc = DocumentApp.create('TEMP_Statement_' + year + '_' + new Date().getTime());
-  var body = doc.getBody();
-
-  body.setPageWidth(PAGE_WIDTH_PORTRAIT).setPageHeight(PAGE_HEIGHT_PORTRAIT);
-  body.setMarginTop(PAGE_MARGIN).setMarginBottom(PAGE_MARGIN)
-      .setMarginLeft(PAGE_MARGIN).setMarginRight(PAGE_MARGIN);
-
-  var contentWidth = PAGE_WIDTH_PORTRAIT - (PAGE_MARGIN * 2);
-  var chunks = computeStatementPageChunks(rows);
-  var totalPages = chunks.length;
-  var summary = computeStatementSummary(rows);
-
-  for (var p = 0; p < totalPages; p++) {
-    if (p > 0) body.appendPageBreak();
-
-    appendStatementHeaderBlock(body, year, generatedNow, contentWidth);
-
-    if (p === 0) {
-      appendStatementSummaryTable(body, summary, contentWidth);
-      body.appendParagraph('');
-    }
-
-    var chunk = chunks[p];
-    var isLastPage = (p === totalPages - 1);
-    var pageTotals = isLastPage ? { withdrawal: summary.totalWithdrawal, deposit: summary.totalDeposit } : null;
-
-    appendStatementTransactionTable(body, chunk, pageTotals);
-
-    body.appendParagraph('');
-    var pageLabel = body.appendParagraph('Page ' + (p + 1) + ' of ' + totalPages);
-    pageLabel.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-    pageLabel.editAsText().setFontSize(9).setForegroundColor('#888888');
-  }
-
-  var footer = body.appendParagraph('This is a system-generated report and does not require a physical or digital signature.');
-  footer.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  footer.editAsText().setItalic(true).setFontSize(9).setForegroundColor('#888888');
-
-  doc.saveAndClose();
-  return doc;
-}
-
-/**
- * Splits rows into pages using STATEMENT_ROWS_FIRST_PAGE for page 1 and
- * STATEMENT_ROWS_OTHER_PAGES for every page after that. Always returns at
- * least one (possibly empty) chunk, so a report with zero rows still
- * renders a single page.
- */
-function computeStatementPageChunks(rows) {
-  var chunks = [];
-  var idx = 0;
-  var isFirst = true;
-
-  while (idx < rows.length) {
-    var pageSize = isFirst ? STATEMENT_ROWS_FIRST_PAGE : STATEMENT_ROWS_OTHER_PAGES;
-    chunks.push(rows.slice(idx, idx + pageSize));
-    idx += pageSize;
-    isFirst = false;
-  }
-
-  if (chunks.length === 0) chunks.push([]);
-  return chunks;
-}
-
-/** The repeating top section: org name/address, then "Account Statement for FY <year>" left / Generated Date Time right. */
-function appendStatementHeaderBlock(body, year, generatedNow, contentWidth) {
-  var title = body.appendParagraph(ORG_NAME);
-  title.setHeading(DocumentApp.ParagraphHeading.TITLE).setAlignment(DocumentApp.HorizontalAlignment.LEFT).setFontFamily("Special Gothic Condensed One");
-
-  var address = body.appendParagraph(ORG_ADDRESS);
-  address.setAlignment(DocumentApp.HorizontalAlignment.LEFT).setFontFamily("Arimo");
-  address.editAsText().setFontSize(10).setForegroundColor('#555555');
-
-  body.appendParagraph('');
-
-  var genDateStr = Utilities.formatDate(new Date(generatedNow), Session.getScriptTimeZone(), "d MMMM yyyy hh:mm a");
-
-  var titleRow = body.appendTable([
-    ['Account Statement for FY ' + year, 'Generated Date Time : ' + genDateStr]
-  ]);
-  titleRow.setBorderWidth(0); // borderless — this is a layout row, not a data table
-
-  var leftCell = titleRow.getRow(0).getCell(0);
-  var rightCell = titleRow.getRow(0).getCell(1);
-  leftCell.editAsText().setBold(true);
-  setCellAlignment(leftCell, DocumentApp.HorizontalAlignment.LEFT);
-  setCellAlignment(rightCell, DocumentApp.HorizontalAlignment.RIGHT);
-  leftCell.setPaddingTop(2).setPaddingBottom(6).setPaddingLeft(0).setPaddingRight(0);
-  rightCell.setPaddingTop(2).setPaddingBottom(6).setPaddingLeft(0).setPaddingRight(0);
-
-  titleRow.setColumnWidth(0, contentWidth * 0.6);
-  titleRow.setColumnWidth(1, contentWidth * 0.4);
-}
-
-/** Page-1-only Cash/UPI/TOTAL breakdown table. */
-function appendStatementSummaryTable(body, summary, contentWidth) {
-  var tableData = [
-    ['TransactionBy', 'Withdrawal', 'Deposit'],
-    ['Cash', formatIndianNumber(summary.cashWithdrawal), formatIndianNumber(summary.cashDeposit)],
-    ['UPI', formatIndianNumber(summary.upiWithdrawal), formatIndianNumber(summary.upiDeposit)],
-    ['TOTAL', formatIndianNumber(summary.totalWithdrawal), formatIndianNumber(summary.totalDeposit)]
-  ];
-
-  var table = body.appendTable(tableData);
-
-  var col1 = contentWidth * 0.4;
-  var col2 = (contentWidth - col1) / 2;
-  table.setColumnWidth(0, col1);
-  table.setColumnWidth(1, col2);
-  table.setColumnWidth(2, col2);
-
-  var lastRowIndex = table.getNumRows() - 1;
-  for (var r = 0; r < table.getNumRows(); r++) {
-    var row = table.getRow(r);
-    var isHeaderOrTotal = (r === 0 || r === lastRowIndex);
-    for (var c = 0; c < row.getNumCells(); c++) {
-      var cell = row.getCell(c);
-      cell.setPaddingTop(2).setPaddingBottom(2).setPaddingLeft(3).setPaddingRight(3);
-      cell.editAsText().setFontSize(9);
-      if (isHeaderOrTotal) {
-        cell.setBackgroundColor('#f1f1f1');
-        cell.editAsText().setBold(true);
-      }
-      if (c !== 0) setCellAlignment(cell, DocumentApp.HorizontalAlignment.RIGHT);
-    }
-  }
-}
-
-/**
- * Builds one page's transaction table: Date, Transaction Description,
- * Mode, Withdrawal, Deposit, Balance. (Ref ID removed — its width was
- * merged into Description.)
- * totals (Withdrawal/Deposit sums for the whole year) is null on all but the
- * last page — that's when the TOTAL row is appended.
- */
-function appendStatementTransactionTable(body, chunkRows, totals) {
-  var tableData = [['Date', 'Transaction Description', 'Mode', 'Withdrawal', 'Deposit', 'Balance']];
-
-  chunkRows.forEach(function (r) {
-    tableData.push([
-      formatYearlyDate(r.date),
-      stripMobileFromDescription(r.description),
-      r.transactionBy ? String(r.transactionBy) : '',
-      r.withdrawal ? formatIndianNumber(r.withdrawal) : '',
-      r.deposit ? formatIndianNumber(r.deposit) : '',
-      formatIndianNumber(r.balance)
-    ]);
-  });
-
-  var hasTotalRow = !!totals;
-  if (hasTotalRow) {
-    tableData.push(['', 'TOTAL', '', formatIndianNumber(totals.withdrawal), formatIndianNumber(totals.deposit), '']);
-  }
-
-  var table = body.appendTable(tableData);
-  styleStatementTable(table, hasTotalRow);
-  setStatementTableColumnWidths(table);
-  return table;
-}
-
-/**
- * Strips trailing "Member: Mobile" style mobile numbers out of a description,
- * e.g. "ShingLup Contribution - Pukhrambam Dorendrajit Singh: 9731399725"
- * -> "ShingLup Contribution - Pukhrambam Dorendrajit Singh".
- */
-function stripMobileFromDescription(desc) {
-  if (!desc) return '';
-  var cleaned = String(desc).replace(/:\s?\d{6,}/g, '');
-  cleaned = cleaned.replace(/\s{2,}/g, ' ').trim();
-  return cleaned;
-}
-
-/** Date/Mode centered; Withdrawal/Deposit/Balance right-aligned; Description left-aligned. */
-function setStatementTableColumnWidths(table) {
-  var contentWidth = PAGE_WIDTH_PORTRAIT - (PAGE_MARGIN * 2);
-  var dateWidth = 50;
-  var transactionByWidth = 35;
-  var withdrawalWidth = 55;
-  var depositWidth = 55;
-  var balanceWidth = 60;
-  var descriptionWidth = contentWidth - (dateWidth + transactionByWidth + withdrawalWidth + depositWidth + balanceWidth);
-
-  table.setColumnWidth(0, dateWidth);
-  table.setColumnWidth(1, descriptionWidth);
-  table.setColumnWidth(2, transactionByWidth);
-  table.setColumnWidth(3, withdrawalWidth);
-  table.setColumnWidth(4, depositWidth);
-  table.setColumnWidth(5, balanceWidth);
-}
-
-function styleStatementTable(table, hasTotalRow) {
-  var CENTERED_COLUMNS = [0, 2]; // Date, Mode
-  var RIGHT_ALIGNED_COLUMNS = [3, 4, 5]; // Withdrawal, Deposit, Balance
-  var FONT_SIZE = 8; // smaller than other reports' 9pt, to fit more rows per page
-
-  var headerRow = table.getRow(0);
-  for (var c = 0; c < headerRow.getNumCells(); c++) {
-    var cell = headerRow.getCell(c);
-    cell.setBackgroundColor('#f1f1f1');
-    cell.editAsText().setBold(true).setFontSize(FONT_SIZE);
-    if (CENTERED_COLUMNS.indexOf(c) !== -1) setCellAlignment(cell, DocumentApp.HorizontalAlignment.CENTER);
-    if (RIGHT_ALIGNED_COLUMNS.indexOf(c) !== -1) setCellAlignment(cell, DocumentApp.HorizontalAlignment.RIGHT);
-  }
-
-  if (hasTotalRow) {
-    var totalRow = table.getRow(table.getNumRows() - 1);
-    for (var c2 = 0; c2 < totalRow.getNumCells(); c2++) {
-      var totalCell = totalRow.getCell(c2);
-      totalCell.setBackgroundColor('#f1f1f1'); // same shading as the header row
-      totalCell.editAsText().setBold(true).setFontSize(FONT_SIZE);
-      if (CENTERED_COLUMNS.indexOf(c2) !== -1) setCellAlignment(totalCell, DocumentApp.HorizontalAlignment.CENTER);
-      if (RIGHT_ALIGNED_COLUMNS.indexOf(c2) !== -1) setCellAlignment(totalCell, DocumentApp.HorizontalAlignment.RIGHT);
-    }
-  }
-
-  for (var r = 1; r < table.getNumRows(); r++) {
-    if (hasTotalRow && r === table.getNumRows() - 1) continue; // already styled above
-    var row = table.getRow(r);
-    for (var c3 = 0; c3 < row.getNumCells(); c3++) {
-      var dataCell = row.getCell(c3);
-      dataCell.setPaddingTop(1).setPaddingBottom(1).setPaddingLeft(3).setPaddingRight(3);
-      dataCell.editAsText().setFontSize(FONT_SIZE);
-      if (CENTERED_COLUMNS.indexOf(c3) !== -1) setCellAlignment(dataCell, DocumentApp.HorizontalAlignment.CENTER);
-      if (RIGHT_ALIGNED_COLUMNS.indexOf(c3) !== -1) setCellAlignment(dataCell, DocumentApp.HorizontalAlignment.RIGHT);
-    }
-  }
-}
-
-/* -------------------------------------------------------------------------
- * Member report
- * (Report Type = "Member" — not a real Category, dispatched before the
- * frequency-based checks, same as "Statement".)
- *
- * IMPORTANT: This report is built with SlidesApp instead of DocumentApp.
- * Google Docs' image API only supports resize/stretch, not true crop-to-fill
- * — SlidesApp.Image.replace(source, true) is the documented way to get real
- * "cover crop" behavior with uniform boxes regardless of source image size.
- * A Slides deck still exports to a single combined PDF (same as Docs), so
- * the final output is still one PDF file, just built via a different engine
- * for this one report type.
- * ---------------------------------------------------------------------- */
-
-function generateMemberReport(filePath) {
-  var rows = getMemberReportRows();
-
-  if (rows.length === 0) {
-    Logger.log('No rows found in Form Responses 1 for Member report (generating anyway).');
-  }
-
-  var presentation = buildMemberReportPresentation(rows);
-  var presoId = presentation.getId();
-  var file = DriveApp.getFileById(presoId);
-  var pdfBlob = file.getAs('application/pdf');
-  pdfBlob.setName(getFileNameFromPath(filePath));
-
-  saveBlobToPath(pdfBlob, filePath);
-
-  file.setTrashed(true); // clean up the temp Slides deck, keep only the PDF
-
-  return true;
-}
-
-/**
- * Finds the first header in `headers` matching any of `candidates` (in order).
- * Returns -1 if none match. Used for columns whose exact header text isn't
- * confirmed (Gender / Email Address / Registration Date) so the report
- * degrades gracefully (blank column) instead of throwing if the real header
- * text differs slightly from these guesses.
- */
-function findColumnIndex(headers, candidates) {
-  for (var i = 0; i < candidates.length; i++) {
-    var idx = headers.indexOf(candidates[i]);
-    if (idx !== -1) return idx;
-  }
-  return -1;
-}
-
-/** Normalizes a mobile number cell (which may be stored as a number) to a plain digit string. */
-function formatMobileNumber(v) {
-  if (v === '' || v === null || v === undefined) return '';
-  if (typeof v === 'number') return String(Math.round(v));
-  return String(v).trim();
-}
-
-/**
- * Pulls Name/Mobile/Gender/Email/RegistrationDate/PhotoURL/PhotoPath from
- * Form Responses 1. Name (col C) and Mobile (col E) use the same fixed
- * positions already proven correct elsewhere in this file (the Helper/
- * YearlyViewHelper sheets). Gender/Email/RegistrationDate use header-name
- * lookup with fallbacks since their exact header text isn't confirmed —
- * verify these show up correctly on first run.
- */
-function getMemberReportRows() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(MEMBER_FORM_SHEET_NAME);
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0].map(function (h) { return String(h).trim(); });
-
-  var nameIdx = 2;   // column C
-  var mobileIdx = 4; // column E
-  var genderIdx = findColumnIndex(headers, ['Gender', 'Sex']);
-  var emailIdx = findColumnIndex(headers, ['Email Address', 'Email']);
-  var regDateIdx = findColumnIndex(headers, ['Registration Date', 'Timestamp']);
-  var photoUrlIdx = findColumnIndex(headers, ['Member Photo']);
-  var photoPathIdx = findColumnIndex(headers, ['PhotoPath']);
-
-  var results = [];
-  for (var r = 1; r < data.length; r++) {
-    var row = data[r];
-    var name = row[nameIdx];
-    if (!name) continue;
-
-    results.push({
-      name: String(name).trim(),
-      mobile: formatMobileNumber(row[mobileIdx]),
-      gender: genderIdx !== -1 ? row[genderIdx] : '',
-      email: emailIdx !== -1 ? row[emailIdx] : '',
-      registrationDate: regDateIdx !== -1 ? row[regDateIdx] : '',
-      photoUrl: photoUrlIdx !== -1 ? row[photoUrlIdx] : '',
-      photoPath: photoPathIdx !== -1 ? row[photoPathIdx] : ''
-    });
-  }
-  return results;
-}
-
-/**
- * Builds the full Member report: paginated member-list slides first
- * (SlNo/Member Name/Mobile No/Gender/Email Address/Registration Date),
- * followed by the photo-collage slides (PHOTO_GRID_COLUMNS x PHOTO_GRID_ROWS
- * per page). "Page X of Y" spans the whole deck (list pages + photo pages).
- */
-function buildMemberReportPresentation(rows) {
-  var presentation = SlidesApp.create('TEMP_Member_' + new Date().getTime());
-  presentation.setPageSize(PAGE_WIDTH_PORTRAIT, PAGE_HEIGHT_PORTRAIT);
-
-  // Slides always creates one default slide — remove it, we add our own.
-  var defaultSlides = presentation.getSlides();
-  for (var d = 0; d < defaultSlides.length; d++) defaultSlides[d].remove();
-
-  var contentWidth = PAGE_WIDTH_PORTRAIT - (PAGE_MARGIN * 2);
-
-  rows.sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
-
-  var listPageCount = Math.max(1, Math.ceil(rows.length / MEMBER_ROWS_PER_PAGE));
-  var photosPerPage = PHOTO_GRID_COLUMNS * PHOTO_GRID_ROWS;
-  var photoPageCount = Math.max(1, Math.ceil(rows.length / photosPerPage));
-  var totalPages = listPageCount + photoPageCount;
-
-  for (var p = 0; p < listPageCount; p++) {
-    var slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
-    var topY = appendSlideHeaderBlock(slide, 'MEMBER LIST', contentWidth);
-    var chunk = rows.slice(p * MEMBER_ROWS_PER_PAGE, (p + 1) * MEMBER_ROWS_PER_PAGE);
-    insertMemberListTable(slide, chunk, p * MEMBER_ROWS_PER_PAGE, topY, contentWidth);
-    appendSlidePageLabel(slide, p + 1, totalPages, contentWidth);
-  }
-
-  appendMemberPhotoSlides(presentation, rows, listPageCount + 1, totalPages, contentWidth);
-
-  return presentation;
-}
-
-/** Org name/address + subtitle, same content as the Docs-based reports' header. Returns the Y position content should start at. */
-function appendSlideHeaderBlock(slide, subtitle, contentWidth) {
-  var title = slide.insertTextBox(ORG_NAME, PAGE_MARGIN, PAGE_MARGIN, contentWidth, 22);
-  title.getText().getTextStyle().setBold(true).setFontSize(16);
-
-  var address = slide.insertTextBox(ORG_ADDRESS, PAGE_MARGIN, PAGE_MARGIN + 22, contentWidth, 16);
-  address.getText().getTextStyle().setFontSize(10).setForegroundColor('#555555');
-
-  var sub = slide.insertTextBox(subtitle, PAGE_MARGIN, PAGE_MARGIN + 44, contentWidth, 18);
-  sub.getText().getTextStyle().setBold(true).setFontSize(11);
-
-  return PAGE_MARGIN + 70; // Y position where table/grid content should start
-}
-
-function appendSlidePageLabel(slide, pageNum, totalPages, contentWidth) {
-  var label = slide.insertTextBox('Page ' + pageNum + ' of ' + totalPages,
-    PAGE_MARGIN, PAGE_HEIGHT_PORTRAIT - PAGE_MARGIN - 16, contentWidth, 14);
-  label.getText().getTextStyle().setFontSize(8).setForegroundColor('#888888');
-  label.getText().getParagraphs()[0].getRange().getParagraphStyle()
-    .setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
-}
-
-/** Builds the SlNo/Member Name/Mobile No/Gender/Email Address/Registration Date table for one page. */
-function insertMemberListTable(slide, chunkRows, startIndex, topY, contentWidth) {
-  var headerRow = ['SlNo', 'Member Name', 'Mobile No', 'Gender', 'Email Address', 'Registration Date'];
-  var numRows = chunkRows.length + 1;
-  var table = slide.insertTable(numRows, headerRow.length, PAGE_MARGIN, topY, contentWidth, 16 * numRows);
-
-  var colWidths = computeMemberTableColumnWidths(contentWidth);
-  for (var c = 0; c < headerRow.length; c++) {
-    var hCell = table.getCell(0, c);
-    hCell.getText().setText(headerRow[c]);
-    hCell.getText().getTextStyle().setBold(true).setFontSize(8);
-    hCell.getFill().setSolidFill('#f1f1f1');
-    table.getColumn(c).setWidth(colWidths[c]);
-  }
-  table.getRow(0).setMinimumHeight(16);
-
-  chunkRows.forEach(function (r, i) {
-    var slNo = startIndex + i + 1;
-    var values = [
-      String(slNo),
-      r.name.toUpperCase(),
-      r.mobile,
-      r.gender ? String(r.gender) : '',
-      r.email ? String(r.email) : '',
-      formatYearlyDate(r.registrationDate)
-    ];
-    for (var c2 = 0; c2 < values.length; c2++) {
-      var cell = table.getCell(i + 1, c2);
-      cell.getText().setText(values[c2]);
-      cell.getText().getTextStyle().setFontSize(8);
-    }
-    table.getRow(i + 1).setMinimumHeight(15);
-  });
-
-  return table;
-}
-
-function computeMemberTableColumnWidths(contentWidth) {
-  var slNoWidth = 30;
-  var mobileWidth = 65;
-  var genderWidth = 50;
-  var regDateWidth = 70;
-  var nameWidth = 140;
-  var emailWidth = contentWidth - (slNoWidth + mobileWidth + genderWidth + regDateWidth + nameWidth);
-  return [slNoWidth, nameWidth, mobileWidth, genderWidth, emailWidth, regDateWidth];
-}
-
-/**
- * Builds the photo-collage pages: PHOTO_GRID_COLUMNS x PHOTO_GRID_ROWS uniform
- * boxes per page, each photo crop-filled to the box (see insertFilledPhoto),
- * with the member's name and mobile centered below each photo.
- */
-function appendMemberPhotoSlides(presentation, rows, startPageNumber, totalPages, contentWidth) {
-  var perPage = PHOTO_GRID_COLUMNS * PHOTO_GRID_ROWS;
-  var totalPhotoPages = Math.max(1, Math.ceil(rows.length / perPage));
-  var folderCache = {};
-
-  var headerReserve = 70; // matches appendSlideHeaderBlock's returned offset
-  var contentHeight = PAGE_HEIGHT_PORTRAIT - (PAGE_MARGIN * 2) - headerReserve;
-
-  var cellWidth = (contentWidth - PHOTO_GRID_GAP * (PHOTO_GRID_COLUMNS - 1)) / PHOTO_GRID_COLUMNS;
-  var cellHeight = (contentHeight - PHOTO_GRID_GAP * (PHOTO_GRID_ROWS - 1)) / PHOTO_GRID_ROWS;
-  var textHeight = 22;
-  var photoHeight = cellHeight - textHeight - 4;
-  var photoWidth = cellWidth;
-
-  for (var p = 0; p < totalPhotoPages; p++) {
-    var slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
-    var topY = appendSlideHeaderBlock(slide, 'MEMBER PHOTOS', contentWidth);
-
-    var chunk = rows.slice(p * perPage, (p + 1) * perPage);
-    chunk.forEach(function (member, i) {
-      var col = i % PHOTO_GRID_COLUMNS;
-      var gridRow = Math.floor(i / PHOTO_GRID_COLUMNS);
-      var cellLeft = PAGE_MARGIN + col * (cellWidth + PHOTO_GRID_GAP);
-      var cellTop = topY + gridRow * (cellHeight + PHOTO_GRID_GAP);
-
-      var blob = getMemberPhotoBlob(member, folderCache);
-      if (blob) {
-        insertFilledPhoto(slide, blob, cellLeft, cellTop, photoWidth, photoHeight);
-      } else {
-        var placeholder = slide.insertShape(SlidesApp.ShapeType.RECTANGLE, cellLeft, cellTop, photoWidth, photoHeight);
-        placeholder.getFill().setSolidFill('#eeeeee');
-        placeholder.getBorder().setTransparent();
-        var noPhotoText = placeholder.getText();
-        noPhotoText.setText('No Photo');
-        noPhotoText.getTextStyle().setFontSize(8).setForegroundColor('#999999');
-      }
-
-      var caption = slide.insertTextBox(member.name.toUpperCase() + '\n' + member.mobile,
-        cellLeft, cellTop + photoHeight + 2, photoWidth, textHeight);
-      caption.getText().getTextStyle().setFontSize(7);
-      var paragraphs = caption.getText().getParagraphs();
-      for (var pg = 0; pg < paragraphs.length; pg++) {
-        paragraphs[pg].getRange().getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
-      }
-    });
-
-    appendSlidePageLabel(slide, startPageNumber + p, totalPages, contentWidth);
-  }
-
-  return totalPhotoPages;
-}
-
-/**
- * Inserts an image at the exact box size with true crop-to-fill (cover),
- * instead of the default stretch. Slides is inserted at box size first
- * (which stretches), then .replace(blob, true) re-crops the same source
- * to fill that exact frame — this is the documented crop-on-replace
- * behavior. Falls back to the stretched version if the crop-replace call
- * fails for any reason (e.g. unsupported image format).
- */
-function insertFilledPhoto(slide, blob, left, top, width, height) {
-  var img = slide.insertImage(blob, left, top, width, height);
-  try {
-    img.replace(blob, true);
-  } catch (e) {
-    Logger.log('Photo crop-fill failed, using stretched image instead: ' + e);
-  }
-  return img;
-}
-
-/** Resolves a member's photo: prefers "Member Photo" (direct Drive file ID), falls back to "PhotoPath". */
-function getMemberPhotoBlob(memberRow, folderCache) {
-  if (memberRow.photoUrl) {
-    var match = String(memberRow.photoUrl).match(/[-\w]{25,}/);
-    if (match) {
-      try {
-        return DriveApp.getFileById(match[0]).getBlob();
-      } catch (e) {
-        // fall through to PhotoPath
-      }
-    }
-  }
-
-  if (memberRow.photoPath) {
-    var file = getFileFromPhotoPath(memberRow.photoPath, folderCache);
-    if (file) {
-      try {
-        return file.getBlob();
-      } catch (e) {
-        return null;
-      }
-    }
-  }
-
-  return null;
-}
-
-/** Like getFileUrlFromPath, but returns the actual Drive File object instead of a URL string. */
-function getFileFromPhotoPath(path, folderCache) {
-  folderCache = folderCache || {};
-  var relativeParts = String(path).split('/').filter(Boolean);
-  if (relativeParts.length === 0) return null;
-
-  var fileName = relativeParts.pop();
-  var folderParts = INVOICE_BASE_FOLDER_PATH.concat(relativeParts);
-  var folder = getFolderByPath(folderParts, folderCache);
-  if (!folder) return null;
-
-  var files = folder.getFilesByName(fileName);
-  if (!files.hasNext()) return null;
-  return files.next();
-}
-
-/* -------------------------------------------------------------------------
- * Shared helpers
- * ---------------------------------------------------------------------- */
-
-function styleInfoTable(table) {
-  for (var r = 0; r < table.getNumRows(); r++) {
-    var row = table.getRow(r);
-    for (var c = 0; c < row.getNumCells(); c++) {
-      var cell = row.getCell(c);
-      cell.setPaddingTop(3).setPaddingBottom(3).setPaddingLeft(5).setPaddingRight(5);
-      if (c % 2 === 0) {
-        // Label columns (Report Name, Category Name, Collection Frequency, Generated DateTime)
-        cell.setBackgroundColor('#f1f1f1');
-        cell.editAsText().setBold(true);
-      } else {
-        // Value columns
-        cell.setBackgroundColor('#ffffff');
-      }
-    }
-  }
-}
-
-/** Centers (or otherwise aligns) all paragraph text inside a table cell. */
-function setCellAlignment(cell, alignment) {
-  for (var i = 0; i < cell.getNumChildren(); i++) {
-    var child = cell.getChild(i);
-    if (child.getType() === DocumentApp.ElementType.PARAGRAPH) {
-      child.asParagraph().setAlignment(alignment);
-    }
-  }
-}
-
-function getFileNameFromPath(path) {
-  var parts = String(path).split('/').filter(Boolean);
-  return parts[parts.length - 1];
-}
-
-/** Saves a blob into Drive at a path like "/GeneratedReports/abc123.pdf", creating folders as needed. */
-function saveBlobToPath(blob, path) {
-  var relativeParts = String(path).split('/').filter(Boolean);
-  var fileName = relativeParts.pop();
-  var folderParts = INVOICE_BASE_FOLDER_PATH.concat(relativeParts);
-  var folder = getOrCreateFolderByPath(folderParts);
-
-  var existing = folder.getFilesByName(fileName);
-  while (existing.hasNext()) existing.next().setTrashed(true); // overwrite if regenerating
-
-  folder.createFile(blob).setName(fileName);
-}
-
-/** Like getFolderByPath, but creates any missing folder segments instead of failing. */
-function getOrCreateFolderByPath(folderNames) {
-  var folder = DriveApp.getRootFolder();
-  for (var i = 0; i < folderNames.length; i++) {
-    var subFolders = folder.getFoldersByName(folderNames[i]);
-    folder = subFolders.hasNext() ? subFolders.next() : folder.createFolder(folderNames[i]);
-  }
-  return folder;
-}
+  function closeModal() { document.getElementById('receipt-modal').classList.remove('open'); }
+  document.getElementById('close-receipt-btn').onclick = closeModal;
+  document.getElementById('receipt-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+  document.addEventListener('DOMContentLoaded', initPortal);
+</script>
+</body>
+</html>
