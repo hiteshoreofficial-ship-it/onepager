@@ -384,20 +384,36 @@
     }
     .team-phone-btn:hover { background: var(--yellow-light); border-color: var(--yellow-deep); }
 
-    /* ── FORM SECTION ── */
-    .form-section {
-      background: var(--canvas);
-      border-radius: var(--r-feat);
-      border: 1px solid var(--hairline);
-      overflow: hidden;
-      box-shadow: var(--shadow-card);
-      width: 100%;
+    /* ── GET IN TOUCH BUTTON ── */
+    .cta-section {
+      display: flex;
+      justify-content: center;
+      padding: 4px 0;
     }
-    .form-iframe {
+    .btn-get-in-touch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       width: 100%;
-      height: 520px;
-      border: none;
-      display: block;
+      padding: 16px 24px;
+      background: var(--blue);
+      color: #ffffff;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: var(--r-xl);
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(66, 98, 255, 0.3);
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-get-in-touch:hover {
+      background: var(--blue-pressed);
+      box-shadow: 0 8px 24px rgba(66, 98, 255, 0.4);
+      transform: translateY(-2px);
+    }
+    .btn-get-in-touch:active {
+      transform: scale(0.98);
     }
 
     /* ── RECEIPT MODAL (BOTTOM SHEET) ── */
@@ -676,9 +692,11 @@
         <div class="team-grid" id="core-team-grid"></div>
       </div>
 
-      <!-- GOOGLE FORM SECTION -->
-      <div class="form-section">
-        <iframe class="form-iframe" src="https://docs.google.com/forms/d/e/1FAIpQLScwLRFJDrWfDsD5QspePqDzRBorwueaacpvtWsW6gOwoMayXQ/viewform?embedded=true" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+      <!-- GET IN TOUCH BUTTON -->
+      <div class="cta-section">
+        <a href="https://forms.gle/F8VktD9nYpw1uPyM9" target="_blank" rel="noopener noreferrer" class="btn-get-in-touch">
+          💬 Get in touch
+        </a>
       </div>
 
     </div>
