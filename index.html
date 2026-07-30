@@ -620,12 +620,12 @@
       background: var(--surface-glass-card);
       backdrop-filter: var(--backdrop-blur);
       -webkit-backdrop-filter: var(--backdrop-blur);
-      border-radius: 0; /* Removed round corners */
+      border-radius: 0;
       border-top: 1px solid var(--border-glass);
       border-bottom: 1px solid var(--border-glass);
       border-left: none;
       border-right: none;
-      margin-left: -16px; /* Expands across screen edges */
+      margin-left: -16px;
       margin-right: -16px;
       width: calc(100% + 32px);
       padding: 22px 0 12px;
@@ -666,7 +666,7 @@
       background: var(--surface-solid);
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-subtle);
-      border-left: 10px solid var(--primary-blue); /* Updated: Prominent accent bar */
+      border-left: 10px solid var(--primary-blue);
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -777,7 +777,7 @@
 
     .contrib-actions {
       display: flex;
-      justify-content: center; /* Center the button */
+      justify-content: center;
       gap: 8px;
       margin-top: 4px;
     }
@@ -812,15 +812,18 @@
       box-shadow: 0 8px 24px var(--primary-blue-glow);
       transform: translateY(-2px);
     }
-.btn-receipt {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-  color: #ffffff;
-  width: 60%;
-  margin-left: auto;
-  margin-right: 0;
-  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25);
-}
-    .btn-receipt:hover {
+
+    /* Updated .btn-receipt: Pointer events disabled so click passes through to the parent card */
+    .btn-receipt {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      color: #ffffff;
+      width: 60%;
+      margin-left: auto;
+      margin-right: 0;
+      box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25);
+      pointer-events: none; /* Make button purely visual; clicks pass through to .contrib-card */
+    }
+    .contrib-card:hover .btn-receipt {
       background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
       box-shadow: 0 8px 20px rgba(29, 78, 216, 0.35);
     }
@@ -1928,7 +1931,7 @@
             ${c.remarks ? `<div class="contrib-remarks">📝 ${c.remarks}</div>` : ''}
           </div>
           <div class="contrib-actions">
-            <button class="btn btn-receipt" onclick="event.stopPropagation(); openReceipt('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">Show Details</button>
+            <span class="btn btn-receipt">Show Details</span>
           </div>`;
         cardsContainer.appendChild(card);
       });
