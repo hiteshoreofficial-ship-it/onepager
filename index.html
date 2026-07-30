@@ -615,19 +615,25 @@
       letter-spacing: 0.2px;
     }
 
-    /* ── CONTRIBUTIONS SECTION ── */
+    /* ── CONTRIBUTIONS SECTION (EDGE-TO-EDGE & NO ROUND CORNERS) ── */
     .contrib-section {
       background: var(--surface-glass-card);
       backdrop-filter: var(--backdrop-blur);
       -webkit-backdrop-filter: var(--backdrop-blur);
-      border-radius: var(--radius-xl);
-      border: 1px solid var(--border-glass);
+      border-radius: 0; /* Removed round corners */
+      border-top: 1px solid var(--border-glass);
+      border-bottom: 1px solid var(--border-glass);
+      border-left: none;
+      border-right: none;
+      margin-left: -16px; /* Expands across screen edges */
+      margin-right: -16px;
+      width: calc(100% + 32px);
       padding: 22px 0 12px;
       box-shadow: var(--shadow-md);
       animation: fadeInUp 0.6s var(--transition-smooth) 0.3s backwards;
     }
     .contrib-section-header {
-      padding: 0 22px;
+      padding: 0 16px;
     }
     .swipe-hint {
       display: flex;
@@ -644,7 +650,7 @@
       overflow-y: visible;
       -webkit-overflow-scrolling: touch;
       scroll-snap-type: x mandatory;
-      padding: 8px 22px 24px;
+      padding: 8px 16px 24px;
     }
     .cards-track::-webkit-scrollbar { display: none; }
     .cards-row {
@@ -911,13 +917,6 @@
       padding: 4px 12px;
       border-radius: var(--radius-full);
       border: 1px solid;
-    }
-    .team-roles {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 500;
-      margin-top: 5px;
-      line-height: 1.4;
     }
     .team-phone-btn {
       flex-shrink: 0;
@@ -1396,7 +1395,7 @@
         </div>
       </div>
 
-      <!-- CONTRIBUTIONS SECTION -->
+      <!-- CONTRIBUTIONS SECTION (FULL-WIDTH TOUCHING MOBILE EDGES) -->
       <div class="contrib-section">
         <div class="contrib-section-header">
           <div class="section-header">
@@ -1955,7 +1954,6 @@
             <div class="team-desig-row">
               <span class="team-desig" style="${theme.desig}">${t.designation}</span>
             </div>
-            <div class="team-roles">${t.roles}</div>
           </div>
           ${t.phone && !isVacant ? `<a href="tel:${t.phone}" class="team-phone-btn" onclick="event.stopPropagation();" title="Call">📞</a>` : ''}`;
         teamGrid.appendChild(card);
