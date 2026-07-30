@@ -666,7 +666,7 @@
       background: var(--surface-solid);
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-subtle);
-      border-left: 6px solid var(--primary-blue);
+      border-left: 10px solid var(--primary-blue); /* Updated: Prominent accent bar */
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -777,6 +777,7 @@
 
     .contrib-actions {
       display: flex;
+      justify-content: center; /* Center the button */
       gap: 8px;
       margin-top: 4px;
     }
@@ -811,12 +812,14 @@
       box-shadow: 0 8px 24px var(--primary-blue-glow);
       transform: translateY(-2px);
     }
-    .btn-receipt {
-      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-      color: #ffffff;
-      width: 100%;
-      box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25);
-    }
+.btn-receipt {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  color: #ffffff;
+  width: 60%;
+  margin-left: auto;
+  margin-right: 0;
+  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25);
+}
     .btn-receipt:hover {
       background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
       box-shadow: 0 8px 20px rgba(29, 78, 216, 0.35);
@@ -1925,7 +1928,7 @@
             ${c.remarks ? `<div class="contrib-remarks">📝 ${c.remarks}</div>` : ''}
           </div>
           <div class="contrib-actions">
-            <button class="btn btn-receipt" onclick="event.stopPropagation(); handlePrintClick('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">🖨️ View Receipt</button>
+            <button class="btn btn-receipt" onclick="event.stopPropagation(); openReceipt('${c.id}','${encodeURIComponent(c.invoiceUrl||'')}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')">Show Details</button>
           </div>`;
         cardsContainer.appendChild(card);
       });
@@ -2007,12 +2010,6 @@
   document.getElementById('id-card-modal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeIdModal();
   });
-
-  function handlePrintClick(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
-    const inv = decodeURIComponent(urlEnc || '');
-    if (inv.startsWith('http')) { window.open(inv, '_blank'); }
-    else { openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc); setTimeout(()=>window.print(), 300); }
-  }
 
   function openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
     activeReceiptInvoiceUrl = decodeURIComponent(urlEnc || '');
