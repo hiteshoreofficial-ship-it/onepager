@@ -1,1597 +1,1577 @@
 <!doctype html>
 <html lang="en" data-theme="light">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
-    <meta
-      http-equiv="Cache-Control"
-      content="no-cache, no-store, must-revalidate"
-    />
-    <title>KACM Member Portal</title>
 
-    <!-- Premium Typography: Plus Jakarta Sans, Outfit & Space Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <title>KACM Member Portal</title>
 
-    <!-- Lucide Icons & Canvas Confetti CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Premium Typography: Plus Jakarta Sans, Outfit & Space Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet" />
 
-    <style>
-      /* ── DESIGN SYSTEM & DESIGN TOKENS ── */
-      :root {
-        --font-main:
-          "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
-        --font-display: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
-        --font-mono: "Space Mono", monospace;
+  <!-- Lucide Icons & Canvas Confetti CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-        /* Colors - Light Theme */
-        --bg-gradient: radial-gradient(
-          circle at 50% -20%,
+  <style>
+    /* ── DESIGN SYSTEM & DESIGN TOKENS ── */
+    :root {
+      --font-main:
+        "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-display: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: "Space Mono", monospace;
+
+      /* Colors - Light Theme */
+      --bg-gradient: radial-gradient(circle at 50% -20%,
           #e0e7ff 0%,
           #f4f7fe 45%,
-          #ebf1fd 100%
-        );
-        --bg-main: #f4f7fe;
-        --surface-glass: rgba(255, 255, 255, 0.65);
-        --surface-glass-hover: rgba(255, 255, 255, 0.85);
-        --surface-glass-card: rgba(255, 255, 255, 0.75);
-        --surface-solid: #ffffff;
+          #ebf1fd 100%);
+      --bg-main: #f4f7fe;
+      --surface-glass: rgba(255, 255, 255, 0.65);
+      --surface-glass-hover: rgba(255, 255, 255, 0.85);
+      --surface-glass-card: rgba(255, 255, 255, 0.75);
+      --surface-solid: #ffffff;
 
-        --border-glass: rgba(255, 255, 255, 0.8);
-        --border-subtle: rgba(15, 23, 42, 0.08);
-        --border-highlight: rgba(255, 255, 255, 0.9);
+      --border-glass: rgba(255, 255, 255, 0.8);
+      --border-subtle: rgba(15, 23, 42, 0.08);
+      --border-highlight: rgba(255, 255, 255, 0.9);
 
-        --text-main: #090d16;
-        --text-muted: #525e75;
-        --text-inverse: #ffffff;
+      --text-main: #090d16;
+      --text-muted: #525e75;
+      --text-inverse: #ffffff;
 
-        --primary-blue: #1d4ed8;
-        --primary-blue-light: #3b82f6;
-        --primary-blue-hover: #1e40af;
-        --primary-blue-glow: rgba(29, 78, 216, 0.28);
+      --primary-blue: #1d4ed8;
+      --primary-blue-light: #3b82f6;
+      --primary-blue-hover: #1e40af;
+      --primary-blue-glow: rgba(29, 78, 216, 0.28);
 
-        --accent-gold: #f59e0b;
-        --accent-gold-light: #fbbf24;
-        --accent-gold-bg: rgba(245, 158, 11, 0.12);
-        --accent-gold-border: rgba(245, 158, 11, 0.3);
+      --accent-gold: #f59e0b;
+      --accent-gold-light: #fbbf24;
+      --accent-gold-bg: rgba(245, 158, 11, 0.12);
+      --accent-gold-border: rgba(245, 158, 11, 0.3);
 
-        --teal-accent: #0d9488;
-        --teal-bg: rgba(13, 148, 136, 0.12);
+      --teal-accent: #0d9488;
+      --teal-bg: rgba(13, 148, 136, 0.12);
 
-        --hero-bg: linear-gradient(
-          135deg,
+      --hero-bg: linear-gradient(135deg,
           #090d16 0%,
           #0f172a 40%,
           #1e3a8a 85%,
-          #1d4ed8 100%
-        );
-        --footer-bg: #030712;
+          #1d4ed8 100%);
+      --footer-bg: #030712;
 
-        --radius-sm: 12px;
-        --radius-md: 18px;
-        --radius-lg: 24px;
-        --radius-xl: 32px;
-        --radius-full: 9999px;
+      --radius-sm: 12px;
+      --radius-md: 18px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+      --radius-full: 9999px;
 
-        --shadow-sm: 0 4px 14px rgba(9, 13, 22, 0.03);
-        --shadow-md:
-          0 12px 32px -6px rgba(9, 13, 22, 0.06),
-          0 4px 12px -2px rgba(9, 13, 22, 0.03);
-        --shadow-lg:
-          0 24px 48px -12px rgba(9, 13, 22, 0.12),
-          0 8px 20px -4px rgba(9, 13, 22, 0.06);
-        --shadow-glow: 0 0 32px rgba(29, 78, 216, 0.22);
+      --shadow-sm: 0 4px 14px rgba(9, 13, 22, 0.03);
+      --shadow-md:
+        0 12px 32px -6px rgba(9, 13, 22, 0.06),
+        0 4px 12px -2px rgba(9, 13, 22, 0.03);
+      --shadow-lg:
+        0 24px 48px -12px rgba(9, 13, 22, 0.12),
+        0 8px 20px -4px rgba(9, 13, 22, 0.06);
+      --shadow-glow: 0 0 32px rgba(29, 78, 216, 0.22);
 
-        --backdrop-blur: blur(20px) saturate(190%);
-        --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-        --transition-smooth: cubic-bezier(0.16, 1, 0.3, 1);
-      }
+      --backdrop-blur: blur(20px) saturate(190%);
+      --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --transition-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-      /* Dark Mode Overrides */
-      [data-theme="dark"] {
-        --bg-gradient: radial-gradient(
-          circle at 50% -20%,
+    /* Dark Mode Overrides */
+    [data-theme="dark"] {
+      --bg-gradient: radial-gradient(circle at 50% -20%,
           #1e1b4b 0%,
           #070a12 50%,
-          #030712 100%
-        );
-        --bg-main: #070a12;
-        --surface-glass: rgba(15, 23, 42, 0.65);
-        --surface-glass-hover: rgba(30, 41, 59, 0.85);
-        --surface-glass-card: rgba(15, 23, 42, 0.75);
-        --surface-solid: #0f172a;
+          #030712 100%);
+      --bg-main: #070a12;
+      --surface-glass: rgba(15, 23, 42, 0.65);
+      --surface-glass-hover: rgba(30, 41, 59, 0.85);
+      --surface-glass-card: rgba(15, 23, 42, 0.75);
+      --surface-solid: #0f172a;
 
-        --border-glass: rgba(255, 255, 255, 0.12);
-        --border-subtle: rgba(255, 255, 255, 0.08);
-        --border-highlight: rgba(255, 255, 255, 0.15);
+      --border-glass: rgba(255, 255, 255, 0.12);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(255, 255, 255, 0.15);
 
-        --text-main: #f8fafc;
-        --text-muted: #94a3b8;
-        --text-inverse: #070a12;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-inverse: #070a12;
 
-        --primary-blue: #3b82f6;
-        --primary-blue-light: #60a5fa;
-        --primary-blue-hover: #2563eb;
-        --primary-blue-glow: rgba(59, 130, 246, 0.35);
+      --primary-blue: #3b82f6;
+      --primary-blue-light: #60a5fa;
+      --primary-blue-hover: #2563eb;
+      --primary-blue-glow: rgba(59, 130, 246, 0.35);
 
-        --hero-bg: linear-gradient(
-          135deg,
+      --hero-bg: linear-gradient(135deg,
           #030712 0%,
           #0f172a 50%,
-          #1e3a8a 100%
-        );
-        --footer-bg: #010409;
+          #1e3a8a 100%);
+      --footer-bg: #010409;
 
-        --shadow-md: 0 12px 32px -6px rgba(0, 0, 0, 0.45);
-        --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.7);
+      --shadow-md: 0 12px 32px -6px rgba(0, 0, 0, 0.45);
+      --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--bg-main);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Animated Lighting Blobs */
+    .bg-blobs {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.38;
+      will-change: transform;
+      animation: blobFloat 18s infinite alternate ease-in-out;
+    }
+
+    .blob-1 {
+      top: -120px;
+      left: -100px;
+      width: 420px;
+      height: 420px;
+      background: #3b82f6;
+    }
+
+    .blob-2 {
+      bottom: 15%;
+      right: -100px;
+      width: 450px;
+      height: 450px;
+      background: #8b5cf6;
+      animation-delay: -6s;
+    }
+
+    .blob-3 {
+      top: 40%;
+      left: 20%;
+      width: 350px;
+      height: 350px;
+      background: #0d9488;
+      animation-delay: -12s;
+    }
+
+    @keyframes blobFloat {
+      0% {
+        transform: translate3d(0, 0, 0) scale(1);
       }
 
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        -webkit-tap-highlight-color: transparent;
+      50% {
+        transform: translate3d(40px, -50px, 0) scale(1.1);
       }
 
-      body {
-        font-family: var(--font-main);
-        background: var(--bg-main);
-        background-image: var(--bg-gradient);
-        background-attachment: fixed;
-        color: var(--text-main);
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        min-height: 100dvh;
-        display: flex;
-        flex-direction: column;
-        overflow-x: hidden;
-        position: relative;
+      100% {
+        transform: translate3d(-30px, 30px, 0) scale(0.92);
       }
+    }
 
-      /* Ambient Animated Lighting Blobs */
-      .bg-blobs {
-        position: fixed;
-        inset: 0;
-        overflow: hidden;
-        pointer-events: none;
-        z-index: 0;
-      }
+    /* Scroll progress bar */
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #1d4ed8, #f59e0b, #0d9488);
+      z-index: 100;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
 
-      .blob {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(100px);
-        opacity: 0.38;
-        will-change: transform;
-        animation: blobFloat 18s infinite alternate ease-in-out;
-      }
+    /* ── NAVIGATION ── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--surface-glass);
+      backdrop-filter: var(--backdrop-blur);
+      -webkit-backdrop-filter: var(--backdrop-blur);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 20px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s var(--transition-smooth);
+    }
 
-      .blob-1 {
-        top: -120px;
-        left: -100px;
-        width: 420px;
-        height: 420px;
-        background: #3b82f6;
-      }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-      .blob-2 {
-        bottom: 15%;
-        right: -100px;
-        width: 450px;
-        height: 450px;
-        background: #8b5cf6;
-        animation-delay: -6s;
-      }
+    .nav-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #ffffff;
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
 
-      .blob-3 {
-        top: 40%;
-        left: 20%;
-        width: 350px;
-        height: 350px;
-        background: #0d9488;
-        animation-delay: -12s;
-      }
-
-      @keyframes blobFloat {
-        0% {
-          transform: translate3d(0, 0, 0) scale(1);
-        }
-
-        50% {
-          transform: translate3d(40px, -50px, 0) scale(1.1);
-        }
-
-        100% {
-          transform: translate3d(-30px, 30px, 0) scale(0.92);
-        }
-      }
-
-      /* Scroll progress bar */
-      .scroll-progress {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #1d4ed8, #f59e0b, #0d9488);
-        z-index: 100;
-        width: 0%;
-        transition: width 0.1s linear;
-      }
-
-      /* ── NAVIGATION ── */
-      .nav {
-        position: sticky;
-        top: 0;
-        z-index: 40;
-        background: var(--surface-glass);
-        backdrop-filter: var(--backdrop-blur);
-        -webkit-backdrop-filter: var(--backdrop-blur);
-        border-bottom: 1px solid var(--border-subtle);
-        padding: 0 20px;
-        height: 68px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        transition: all 0.3s var(--transition-smooth);
-      }
-
-      .nav-brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .nav-logo {
-        width: 42px;
-        height: 42px;
-        border-radius: var(--radius-md);
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        color: #ffffff;
-        box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
-        flex-shrink: 0;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .nav-logo::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          135deg,
+    .nav-logo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg,
           rgba(255, 255, 255, 0.4),
-          transparent
-        );
+          transparent);
+    }
+
+    .nav-title-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-name {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+      letter-spacing: -0.4px;
+    }
+
+    .nav-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-full);
+      background: var(--surface-glass-hover);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.25s var(--transition-smooth);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .icon-btn:hover {
+      transform: scale(1.08) rotate(5deg);
+      border-color: var(--primary-blue);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* ── MAIN CONTAINER ── */
+    main {
+      flex: 1;
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── ENHANCED ENTRY ANIMATIONS ── */
+    .animate-fadeInUp {
+      animation: fadeInUp 0.6s var(--transition-smooth) forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 24px, 0);
       }
 
-      .nav-title-wrap {
-        display: flex;
-        flex-direction: column;
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
       }
+    }
 
-      .nav-name {
-        font-family: var(--font-display);
-        font-size: 17px;
-        font-weight: 800;
-        color: var(--text-main);
-        line-height: 1.1;
-        letter-spacing: -0.4px;
+    /* ── STATES (LOADING / ERROR) ── */
+    .state-card {
+      background: var(--surface-glass-card);
+      backdrop-filter: var(--backdrop-blur);
+      -webkit-backdrop-filter: var(--backdrop-blur);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-glass);
+      box-shadow: var(--shadow-lg);
+      padding: 56px 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      animation: fadeInUp 0.5s var(--transition-smooth);
+    }
+
+    .state-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .state-icon.loading {
+      background: rgba(29, 78, 216, 0.12);
+      color: var(--primary-blue);
+      box-shadow: 0 0 30px rgba(29, 78, 216, 0.2);
+    }
+
+    .state-icon.error {
+      background: rgba(239, 68, 68, 0.12);
+      color: #ef4444;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid rgba(29, 78, 216, 0.18);
+      border-top-color: var(--primary-blue);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
       }
+    }
 
-      .nav-sub {
-        font-size: 11px;
-        color: var(--text-muted);
-        font-weight: 600;
-        letter-spacing: 0.2px;
-      }
+    .state-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.4px;
+    }
 
-      .nav-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+    .state-body {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 340px;
+    }
 
-      .icon-btn {
-        width: 42px;
-        height: 42px;
-        border-radius: var(--radius-full);
-        background: var(--surface-glass-hover);
-        border: 1px solid var(--border-subtle);
-        color: var(--text-main);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.25s var(--transition-smooth);
-        box-shadow: var(--shadow-sm);
-      }
+    /* ── PROFILE HERO CARD ── */
+    .profile-card {
+      background: var(--hero-bg);
+      border-radius: var(--radius-xl);
+      padding: 28px 24px;
+      color: #ffffff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      transition:
+        transform 0.35s var(--transition-smooth),
+        box-shadow 0.35s var(--transition-smooth);
+      animation: fadeInUp 0.6s var(--transition-smooth) 0.1s backwards;
+    }
 
-      .icon-btn:hover {
-        transform: scale(1.08) rotate(5deg);
-        border-color: var(--primary-blue);
-        box-shadow: var(--shadow-glow);
-      }
+    .profile-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 30px 60px -15px rgba(29, 78, 216, 0.35);
+    }
 
-      .icon-btn:active {
-        transform: scale(0.95);
-      }
-
-      /* ── MAIN CONTAINER ── */
-      main {
-        flex: 1;
-        max-width: 680px;
-        width: 100%;
-        margin: 0 auto;
-        padding: 24px 16px 48px;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-        position: relative;
-        z-index: 1;
-      }
-
-      /* ── ENHANCED ENTRY ANIMATIONS ── */
-      .animate-fadeInUp {
-        animation: fadeInUp 0.6s var(--transition-smooth) forwards;
-      }
-
-      @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translate3d(0, 24px, 0);
-        }
-
-        to {
-          opacity: 1;
-          transform: translate3d(0, 0, 0);
-        }
-      }
-
-      /* ── STATES (LOADING / ERROR) ── */
-      .state-card {
-        background: var(--surface-glass-card);
-        backdrop-filter: var(--backdrop-blur);
-        -webkit-backdrop-filter: var(--backdrop-blur);
-        border-radius: var(--radius-xl);
-        border: 1px solid var(--border-glass);
-        box-shadow: var(--shadow-lg);
-        padding: 56px 24px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-        animation: fadeInUp 0.5s var(--transition-smooth);
-      }
-
-      .state-icon {
-        width: 72px;
-        height: 72px;
-        border-radius: var(--radius-full);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 32px;
-      }
-
-      .state-icon.loading {
-        background: rgba(29, 78, 216, 0.12);
-        color: var(--primary-blue);
-        box-shadow: 0 0 30px rgba(29, 78, 216, 0.2);
-      }
-
-      .state-icon.error {
-        background: rgba(239, 68, 68, 0.12);
-        color: #ef4444;
-      }
-
-      .spinner {
-        width: 36px;
-        height: 36px;
-        border: 3.5px solid rgba(29, 78, 216, 0.18);
-        border-top-color: var(--primary-blue);
-        border-radius: 50%;
-        animation: spin 0.75s linear infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      .state-title {
-        font-family: var(--font-display);
-        font-size: 22px;
-        font-weight: 800;
-        color: var(--text-main);
-        letter-spacing: -0.4px;
-      }
-
-      .state-body {
-        font-size: 14px;
-        color: var(--text-muted);
-        line-height: 1.6;
-        max-width: 340px;
-      }
-
-      /* ── PROFILE HERO CARD ── */
-      .profile-card {
-        background: var(--hero-bg);
-        border-radius: var(--radius-xl);
-        padding: 28px 24px;
-        color: #ffffff;
-        position: relative;
-        overflow: hidden;
-        box-shadow: var(--shadow-lg), var(--shadow-glow);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        transition:
-          transform 0.35s var(--transition-smooth),
-          box-shadow 0.35s var(--transition-smooth);
-        animation: fadeInUp 0.6s var(--transition-smooth) 0.1s backwards;
-      }
-
-      .profile-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 30px 60px -15px rgba(29, 78, 216, 0.35);
-      }
-
-      /* Holographic Light Pass */
-      .profile-card::before {
-        content: "";
-        position: absolute;
-        top: -80px;
-        right: -80px;
-        width: 260px;
-        height: 260px;
-        background: radial-gradient(
-          circle,
+    /* Holographic Light Pass */
+    .profile-card::before {
+      content: "";
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle,
           rgba(245, 158, 11, 0.35) 0%,
-          transparent 70%
-        );
-        pointer-events: none;
-        animation: pulseGlow 6s infinite alternate ease-in-out;
-      }
+          transparent 70%);
+      pointer-events: none;
+      animation: pulseGlow 6s infinite alternate ease-in-out;
+    }
 
-      .profile-card::after {
-        content: "";
-        position: absolute;
-        bottom: -100px;
-        left: -40px;
-        width: 260px;
-        height: 260px;
-        background: radial-gradient(
-          circle,
+    .profile-card::after {
+      content: "";
+      position: absolute;
+      bottom: -100px;
+      left: -40px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle,
           rgba(59, 130, 246, 0.4) 0%,
-          transparent 70%
-        );
-        pointer-events: none;
+          transparent 70%);
+      pointer-events: none;
+    }
+
+    @keyframes pulseGlow {
+      0% {
+        opacity: 0.6;
+        transform: scale(1);
       }
 
-      @keyframes pulseGlow {
-        0% {
-          opacity: 0.6;
-          transform: scale(1);
-        }
+      100% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+    }
 
-        100% {
-          opacity: 1;
-          transform: scale(1.15);
-        }
+    .profile-inner {
+      position: relative;
+      z-index: 2;
+    }
+
+    .greeting-header {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, 0.75);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10b981;
+      display: inline-block;
+      animation: livePulse 2s infinite;
+    }
+
+    @keyframes livePulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
       }
 
-      .profile-inner {
-        position: relative;
-        z-index: 2;
+      50% {
+        opacity: 0.4;
+        transform: scale(1.3);
       }
+    }
 
-      .greeting-header {
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
-        color: rgba(255, 255, 255, 0.75);
-        margin-bottom: 14px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
+    .profile-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
 
-      .live-dot {
-        width: 7px;
-        height: 7px;
-        background: #10b981;
-        border-radius: 50%;
-        box-shadow: 0 0 8px #10b981;
-        display: inline-block;
-        animation: livePulse 2s infinite;
-      }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
 
-      @keyframes livePulse {
-        0%,
-        100% {
-          opacity: 1;
-          transform: scale(1);
-        }
+    .tag-blue {
+      background: rgba(59, 130, 246, 0.25);
+      border: 1px solid rgba(147, 197, 253, 0.4);
+      color: #bfdbfe;
+    }
 
-        50% {
-          opacity: 0.4;
-          transform: scale(1.3);
-        }
-      }
+    .tag-yellow {
+      background: rgba(245, 158, 11, 0.25);
+      border: 1px solid rgba(252, 211, 77, 0.5);
+      color: #fef08a;
+    }
 
-      .profile-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 20px;
-      }
+    .profile-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
 
-      .tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        padding: 6px 14px;
-        border-radius: var(--radius-full);
-        backdrop-filter: blur(12px);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-      }
+    .avatar-wrap {
+      width: 88px;
+      height: 88px;
+      flex-shrink: 0;
+      border-radius: 22px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      font-size: 38px;
+      position: relative;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s var(--transition-smooth);
+    }
 
-      .tag-blue {
-        background: rgba(59, 130, 246, 0.25);
-        border: 1px solid rgba(147, 197, 253, 0.4);
-        color: #bfdbfe;
-      }
+    .profile-card:hover .avatar-wrap {
+      transform: scale(1.04) rotate(-2deg);
+    }
 
-      .tag-yellow {
-        background: rgba(245, 158, 11, 0.25);
-        border: 1px solid rgba(252, 211, 77, 0.5);
-        color: #fef08a;
-      }
+    .avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
 
-      .profile-row {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-      }
+    .profile-info {
+      flex: 1;
+      min-width: 0;
+    }
 
-      .avatar-wrap {
-        width: 88px;
-        height: 88px;
-        flex-shrink: 0;
-        border-radius: 22px;
-        overflow: hidden;
-        background: rgba(255, 255, 255, 0.12);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid rgba(255, 255, 255, 0.35);
-        font-size: 38px;
-        position: relative;
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
-        transition: transform 0.3s var(--transition-smooth);
-      }
+    .profile-name {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
 
-      .profile-card:hover .avatar-wrap {
-        transform: scale(1.04) rotate(-2deg);
-      }
+    .meta-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
 
-      .avatar-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: none;
-      }
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: var(--radius-full);
+      padding: 5px 13px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(6px);
+    }
 
-      .profile-info {
-        flex: 1;
-        min-width: 0;
-      }
+    /* ── KPI STRIP ── */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      animation: fadeInUp 0.6s var(--transition-smooth) 0.2s backwards;
+    }
 
-      .profile-name {
-        font-family: var(--font-display);
-        font-size: 24px;
-        font-weight: 800;
-        color: #ffffff;
-        line-height: 1.15;
-        letter-spacing: -0.5px;
-        margin-bottom: 12px;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-      }
+    .kpi-card {
+      background: var(--surface-glass-card);
+      backdrop-filter: var(--backdrop-blur);
+      -webkit-backdrop-filter: var(--backdrop-blur);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-glass);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s var(--transition-smooth);
+      position: relative;
+      overflow: hidden;
+    }
 
-      .meta-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
+    .kpi-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-blue-light);
+    }
 
-      .meta-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(255, 255, 255, 0.14);
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        border-radius: var(--radius-full);
-        padding: 5px 13px;
-        font-size: 12px;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(6px);
-      }
+    .kpi-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
 
-      /* ── KPI STRIP ── */
-      .kpi-strip {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        animation: fadeInUp 0.6s var(--transition-smooth) 0.2s backwards;
-      }
+    .kpi-icon.yellow {
+      background: var(--accent-gold-bg);
+      color: var(--accent-gold);
+    }
 
-      .kpi-card {
-        background: var(--surface-glass-card);
-        backdrop-filter: var(--backdrop-blur);
-        -webkit-backdrop-filter: var(--backdrop-blur);
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--border-glass);
-        padding: 18px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s var(--transition-smooth);
-        position: relative;
-        overflow: hidden;
-      }
+    .kpi-icon.blue {
+      background: rgba(29, 78, 216, 0.12);
+      color: var(--primary-blue-light);
+    }
 
-      .kpi-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--primary-blue-light);
-      }
+    .kpi-icon.teal {
+      background: var(--teal-bg);
+      color: var(--teal-accent);
+    }
 
-      .kpi-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--radius-sm);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-      }
+    .kpi-value {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.6px;
+      line-height: 1.1;
+    }
 
-      .kpi-icon.yellow {
-        background: var(--accent-gold-bg);
-        color: var(--accent-gold);
-      }
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+    }
 
-      .kpi-icon.blue {
-        background: rgba(29, 78, 216, 0.12);
-        color: var(--primary-blue-light);
-      }
+    /* ── SECTION HEADERS ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
 
-      .kpi-icon.teal {
-        background: var(--teal-bg);
-        color: var(--teal-accent);
-      }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.4px;
+    }
 
-      .kpi-value {
-        font-family: var(--font-display);
-        font-size: 22px;
-        font-weight: 800;
-        color: var(--text-main);
-        letter-spacing: -0.6px;
-        line-height: 1.1;
-      }
+    .section-title .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: rgba(29, 78, 216, 0.12);
+      color: var(--primary-blue-light);
+      box-shadow: 0 4px 12px rgba(29, 78, 216, 0.1);
+    }
 
-      .kpi-label {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-        color: var(--text-muted);
-      }
+    .count-pill {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-muted);
+      background: var(--surface-glass);
+      border: 1px solid var(--border-subtle);
+      padding: 5px 14px;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.2px;
+    }
 
-      /* ── SECTION HEADERS ── */
-      .section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
+    /* ── CONTRIBUTIONS SECTION (EDGE-TO-EDGE & NO ROUND CORNERS) ── */
+    .contrib-section {
+      background: var(--surface-glass-card);
+      backdrop-filter: var(--backdrop-blur);
+      -webkit-backdrop-filter: var(--backdrop-blur);
+      border-radius: 0;
+      border-top: 1px solid var(--border-glass);
+      border-bottom: 1px solid var(--border-glass);
+      border-left: none;
+      border-right: none;
+      margin-left: -16px;
+      margin-right: -16px;
+      width: calc(100% + 32px);
+      padding: 22px 0 12px;
+      box-shadow: var(--shadow-md);
+      animation: fadeInUp 0.6s var(--transition-smooth) 0.3s backwards;
+    }
 
-      .section-title {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-family: var(--font-display);
-        font-size: 18px;
-        font-weight: 800;
-        color: var(--text-main);
-        letter-spacing: -0.4px;
-      }
+    .contrib-section-header {
+      padding: 0 16px;
+    }
 
-      .section-title .icon {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--radius-md);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        background: rgba(29, 78, 216, 0.12);
-        color: var(--primary-blue-light);
-        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.1);
-      }
+    .swipe-hint {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      padding: 0 2px;
+    }
 
-      .count-pill {
-        font-size: 11px;
-        font-weight: 800;
-        color: var(--text-muted);
-        background: var(--surface-glass);
-        border: 1px solid var(--border-subtle);
-        padding: 5px 14px;
-        border-radius: var(--radius-full);
-        letter-spacing: 0.2px;
-      }
+    .cards-track {
+      overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      padding: 8px 16px 24px;
 
-      /* ── CONTRIBUTIONS SECTION (EDGE-TO-EDGE & NO ROUND CORNERS) ── */
-      .contrib-section {
-        background: var(--surface-glass-card);
-        backdrop-filter: var(--backdrop-blur);
-        -webkit-backdrop-filter: var(--backdrop-blur);
-        border-radius: 0;
-        border-top: 1px solid var(--border-glass);
-        border-bottom: 1px solid var(--border-glass);
-        border-left: none;
-        border-right: none;
-        margin-left: -16px;
-        margin-right: -16px;
-        width: calc(100% + 32px);
-        padding: 22px 0 12px;
-        box-shadow: var(--shadow-md);
-        animation: fadeInUp 0.6s var(--transition-smooth) 0.3s backwards;
-      }
 
-      .contrib-section-header {
-        padding: 0 16px;
-      }
+    }
 
-      .swipe-hint {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--text-muted);
-        margin-bottom: 14px;
-        padding: 0 2px;
-      }
+    .cards-track::-webkit-scrollbar {
+      display: none;
+    }
 
-      .cards-track {
-        overflow-x: auto;
-        overflow-y: visible;
-        -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x mandatory;
-        padding: 8px 16px 24px;
-   
-      }
+    .cards-row {
+      display: flex;
+      gap: 18px;
+      width: max-content;
 
-      .cards-track::-webkit-scrollbar {
-        display: none;
-      }
+    }
 
-      .cards-row {
-        display: flex;
-        gap: 18px;
-        width: max-content;
-        
-      }
+    /* Contribution Wallet-Style Digital Card */
+    .contrib-card {
+      width: 300px;
+      flex-shrink: 0;
+      background: var(--surface-solid);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      border-left: 10px solid var(--primary-blue);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-md);
+      scroll-snap-align: start;
+      transition: all 0.3s var(--transition-smooth);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
 
-      /* Contribution Wallet-Style Digital Card */
-      .contrib-card {
-        width: 300px;
-        flex-shrink: 0;
-        background: var(--surface-solid);
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--border-subtle);
-        border-left: 10px solid var(--primary-blue);
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        box-shadow: var(--shadow-md);
-        scroll-snap-align: start;
-        transition: all 0.3s var(--transition-smooth);
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-       
-      }
+    }
 
-      .contrib-card::after {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(
-          60deg,
+    .contrib-card::after {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(60deg,
           transparent 40%,
           rgba(255, 255, 255, 0.12) 50%,
-          transparent 60%
-        );
-        transform: rotate(30deg);
-        transition: opacity 0.3s;
-        pointer-events: none;
+          transparent 60%);
+      transform: rotate(30deg);
+      transition: opacity 0.3s;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+
+    .contrib-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary-blue-light);
+    }
+
+    .contrib-card:hover::after {
+      opacity: 1;
+    }
+
+    .contrib-card.monthly {
+      border-left-color: var(--primary-blue);
+    }
+
+    .contrib-card.yearly {
+      border-left-color: var(--teal-accent);
+    }
+
+    .contrib-card.onetime {
+      border-left-color: #a855f7;
+    }
+
+    .contrib-card.default {
+      border-left-color: var(--accent-gold);
+    }
+
+    .contrib-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .freq-pill {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      border: 1px solid;
+    }
+
+    .freq-pill.monthly {
+      background: rgba(29, 78, 216, 0.1);
+      border-color: rgba(29, 78, 216, 0.3);
+      color: var(--primary-blue-light);
+    }
+
+    .freq-pill.yearly {
+      background: var(--teal-bg);
+      border-color: rgba(13, 148, 136, 0.3);
+      color: var(--teal-accent);
+    }
+
+    .freq-pill.onetime {
+      background: rgba(168, 85, 247, 0.1);
+      border-color: rgba(168, 85, 247, 0.3);
+      color: #a855f7;
+    }
+
+    .freq-pill.default {
+      background: var(--accent-gold-bg);
+      border-color: var(--accent-gold-border);
+      color: var(--accent-gold);
+    }
+
+    .contrib-id {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .contrib-amount {
+      font-family: var(--font-display);
+      font-size: 30px;
+      font-weight: 900;
+      color: var(--text-main);
+      letter-spacing: -1.2px;
+      line-height: 1;
+    }
+
+    .contrib-cat {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .contrib-meta {
+      border-top: 1px dashed var(--border-subtle);
+      padding-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .contrib-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .contrib-meta-row strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .contrib-remarks {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-style: italic;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .contrib-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    /* ── BUTTON STYLES ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-main);
+      font-size: 13px;
+      font-weight: 800;
+      border-radius: var(--radius-full);
+      padding: 12px 20px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s var(--transition-smooth);
+      text-decoration: none;
+      white-space: nowrap;
+      line-height: 1;
+      letter-spacing: -0.1px;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-primary {
+      background: var(--primary-blue);
+      color: #ffffff;
+      box-shadow: 0 6px 18px var(--primary-blue-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-blue-hover);
+      box-shadow: 0 8px 24px var(--primary-blue-glow);
+      transform: translateY(-2px);
+    }
+
+    /* Updated .btn-receipt: Pointer events disabled so click passes through to the parent card */
+    .btn-receipt {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      color: #ffffff;
+      width: 60%;
+      margin-left: auto;
+      margin-right: 0;
+      box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25);
+      pointer-events: none;
+      /* Make button purely visual; clicks pass through to .contrib-card */
+    }
+
+    .contrib-card:hover .btn-receipt {
+      background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+      box-shadow: 0 8px 20px rgba(29, 78, 216, 0.35);
+    }
+
+    /* ── TEAM SECTION ── */
+    .team-section {
+      background: var(--surface-glass-card);
+      backdrop-filter: var(--backdrop-blur);
+      -webkit-backdrop-filter: var(--backdrop-blur);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-glass);
+      padding: 10px;
+      box-shadow: var(--shadow-md);
+      animation: fadeInUp 0.6s var(--transition-smooth) 0.4s backwards;
+    }
+
+    .team-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .team-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface-solid);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s var(--transition-smooth);
+      cursor: pointer;
+    }
+
+    .team-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-blue-light);
+    }
+
+    .team-avatar {
+      width: 60px;
+      height: 60px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: var(--font-display);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s var(--transition-smooth);
+
+    }
+
+    .team-card:hover .team-avatar {
+      transform: scale(1.06);
+    }
+
+    .team-avatar img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+      z-index: 2;
+    }
+
+    .team-avatar .team-initials {
+      position: relative;
+      z-index: 1;
+    }
+
+    .team-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .team-name {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      line-height: 1.2;
+    }
+
+    .team-desig-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .team-desig {
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      border: 1px solid;
+    }
+
+    .team-phone-btn {
+      flex-shrink: 0;
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      border: 1px solid var(--border-subtle);
+      background: var(--surface-glass-hover);
+      color: var(--primary-blue-light);
+      text-decoration: none;
+      transition: all 0.25s var(--transition-smooth);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .team-phone-btn:hover {
+      background: var(--primary-blue);
+      color: #ffffff;
+      transform: scale(1.1) rotate(10deg);
+      box-shadow: 0 6px 16px var(--primary-blue-glow);
+    }
+
+    /* ── CTA / GET IN TOUCH ── */
+    .cta-section {
+      display: flex;
+      justify-content: center;
+
+      padding: 20px;
+      animation: fadeInUp 0.6s var(--transition-smooth) 0.5s backwards;
+    }
+
+    .btn-get-in-touch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+      padding: 18px 30px;
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      color: #ffffff;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 800;
+      border-radius: var(--radius-xl);
+      text-decoration: none;
+      box-shadow: 0 10px 30px rgba(29, 78, 216, 0.35);
+      transition: all 0.3s var(--transition-smooth);
+      letter-spacing: -0.2px;
+    }
+
+    .btn-get-in-touch:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 16px 36px rgba(29, 78, 216, 0.45);
+    }
+
+    /* ── RECEIPT MODAL (BOTTOM SHEET) ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(9, 13, 22, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 16px 16px 0 16px;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-sheet {
+      background: var(--surface-solid);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      width: 100%;
+      max-width: 480px;
+      padding: 0;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: slideUpSheet 0.35s var(--transition-smooth);
+      max-height: 90dvh;
+      overflow-y: auto;
+      border: 1px solid var(--border-glass);
+    }
+
+    @keyframes slideUpSheet {
+      from {
+        transform: translate3d(0, 100%, 0);
         opacity: 0;
       }
-      
 
-      .contrib-card:hover {
-        transform: translateY(-6px) scale(1.02);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--primary-blue-light);
-      }
-
-      .contrib-card:hover::after {
+      to {
+        transform: translate3d(0, 0, 0);
         opacity: 1;
       }
-
-      .contrib-card.monthly {
-        border-left-color: var(--primary-blue);
-      }
-
-      .contrib-card.yearly {
-        border-left-color: var(--teal-accent);
-      }
-
-      .contrib-card.onetime {
-        border-left-color: #a855f7;
-      }
-
-      .contrib-card.default {
-        border-left-color: var(--accent-gold);
-      }
-
-      .contrib-card-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-      }
-
-      .freq-pill {
-        font-size: 10px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        padding: 5px 12px;
-        border-radius: var(--radius-full);
-        border: 1px solid;
-      }
-
-      .freq-pill.monthly {
-        background: rgba(29, 78, 216, 0.1);
-        border-color: rgba(29, 78, 216, 0.3);
-        color: var(--primary-blue-light);
-      }
-
-      .freq-pill.yearly {
-        background: var(--teal-bg);
-        border-color: rgba(13, 148, 136, 0.3);
-        color: var(--teal-accent);
-      }
-
-      .freq-pill.onetime {
-        background: rgba(168, 85, 247, 0.1);
-        border-color: rgba(168, 85, 247, 0.3);
-        color: #a855f7;
-      }
-
-      .freq-pill.default {
-        background: var(--accent-gold-bg);
-        border-color: var(--accent-gold-border);
-        color: var(--accent-gold);
-      }
-
-      .contrib-id {
-        font-size: 11px;
-        font-family: var(--font-mono);
-        color: var(--text-muted);
-        font-weight: 700;
-        letter-spacing: 0.5px;
-      }
-
-      .contrib-amount {
-        font-family: var(--font-display);
-        font-size: 30px;
-        font-weight: 900;
-        color: var(--text-main);
-        letter-spacing: -1.2px;
-        line-height: 1;
-      }
-
-      .contrib-cat {
-        font-size: 13.5px;
-        font-weight: 700;
-        color: var(--text-muted);
-        margin-top: 6px;
-      }
-
-      .contrib-meta {
-        border-top: 1px dashed var(--border-subtle);
-        padding-top: 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .contrib-meta-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        color: var(--text-muted);
-        font-weight: 500;
-      }
-
-      .contrib-meta-row strong {
-        color: var(--text-main);
-        font-weight: 700;
-      }
-
-      .contrib-remarks {
-        font-size: 11px;
-        color: var(--text-muted);
-        font-style: italic;
-        line-height: 1.4;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-
-      .contrib-actions {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        margin-top: 4px;
-      }
-
-      /* ── BUTTON STYLES ── */
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        font-family: var(--font-main);
-        font-size: 13px;
-        font-weight: 800;
-        border-radius: var(--radius-full);
-        padding: 12px 20px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.25s var(--transition-smooth);
-        text-decoration: none;
-        white-space: nowrap;
-        line-height: 1;
-        letter-spacing: -0.1px;
-      }
-
-      .btn:active {
-        transform: scale(0.96);
-      }
-
-      .btn-primary {
-        background: var(--primary-blue);
-        color: #ffffff;
-        box-shadow: 0 6px 18px var(--primary-blue-glow);
-      }
-
-      .btn-primary:hover {
-        background: var(--primary-blue-hover);
-        box-shadow: 0 8px 24px var(--primary-blue-glow);
-        transform: translateY(-2px);
-      }
-
-      /* Updated .btn-receipt: Pointer events disabled so click passes through to the parent card */
-      .btn-receipt {
-        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-        color: #ffffff;
-        width: 60%;
-        margin-left: auto;
-        margin-right: 0;
-        box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25);
-        pointer-events: none;
-        /* Make button purely visual; clicks pass through to .contrib-card */
-      }
-
-      .contrib-card:hover .btn-receipt {
-        background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-        box-shadow: 0 8px 20px rgba(29, 78, 216, 0.35);
-      }
-
-      /* ── TEAM SECTION ── */
-      .team-section {
-        background: var(--surface-glass-card);
-        backdrop-filter: var(--backdrop-blur);
-        -webkit-backdrop-filter: var(--backdrop-blur);
-        border-radius: var(--radius-xl);
-        border: 1px solid var(--border-glass);
-        padding: 24px;
-        box-shadow: var(--shadow-md);
-        animation: fadeInUp 0.6s var(--transition-smooth) 0.4s backwards;
-      }
-
-      .team-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        margin-top: 16px;
-      }
-
-      .team-card {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        background: var(--surface-solid);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-lg);
-        padding: 16px;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s var(--transition-smooth);
-        cursor: pointer;
-      }
-
-      .team-card:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--primary-blue-light);
-      }
-
-      .team-avatar {
-        width: 60px;
-        height: 60px;
-        flex-shrink: 0;
-        border-radius: 50%;
-        overflow: hidden;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        font-weight: 800;
-        color: #ffffff;
-        font-family: var(--font-display);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-        transition: transform 0.3s var(--transition-smooth);
-     
-      }
-
-      .team-card:hover .team-avatar {
-        transform: scale(1.06);
-      }
-
-      .team-avatar img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: none;
-        z-index: 2;
-      }
-
-      .team-avatar .team-initials {
-        position: relative;
-        z-index: 1;
-      }
-
-      .team-info {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .team-name {
-        font-family: var(--font-display);
-        font-size: 14px;
-        font-weight: 800;
-        color: var(--text-main);
-        margin-bottom: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.2px;
-        line-height: 1.2;
-      }
-
-      .team-desig-row {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
-      }
-
-      .team-desig {
-        font-size: 10px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-        padding: 4px 12px;
-        border-radius: var(--radius-full);
-        border: 1px solid;
-      }
-
-      .team-phone-btn {
-        flex-shrink: 0;
-        width: 42px;
-        height: 42px;
-        border-radius: var(--radius-full);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        border: 1px solid var(--border-subtle);
-        background: var(--surface-glass-hover);
-        color: var(--primary-blue-light);
-        text-decoration: none;
-        transition: all 0.25s var(--transition-smooth);
-        box-shadow: var(--shadow-sm);
-      }
-
-      .team-phone-btn:hover {
-        background: var(--primary-blue);
-        color: #ffffff;
-        transform: scale(1.1) rotate(10deg);
-        box-shadow: 0 6px 16px var(--primary-blue-glow);
-      }
-
-      /* ── CTA / GET IN TOUCH ── */
-      .cta-section {
-        display: flex;
-        justify-content: center;
-        padding: 8px 0;
-        animation: fadeInUp 0.6s var(--transition-smooth) 0.5s backwards;
-      }
-
-      .btn-get-in-touch {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        width: 100%;
-        max-width: 400px;
-        padding: 18px 30px;
-        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-        color: #ffffff;
-        font-family: var(--font-display);
-        font-size: 16px;
-        font-weight: 800;
-        border-radius: var(--radius-xl);
-        text-decoration: none;
-        box-shadow: 0 10px 30px rgba(29, 78, 216, 0.35);
-        transition: all 0.3s var(--transition-smooth);
-        letter-spacing: -0.2px;
-      }
-
-      .btn-get-in-touch:hover {
-        transform: translateY(-4px) scale(1.02);
-        box-shadow: 0 16px 36px rgba(29, 78, 216, 0.45);
-      }
-
-      /* ── RECEIPT MODAL (BOTTOM SHEET) ── */
-      .modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        z-index: 100;
-        background: rgba(9, 13, 22, 0.7);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        padding: 16px 16px 0 16px;
-        align-items: flex-end;
-        justify-content: center;
-      }
-
-      .modal-overlay.open {
-        display: flex;
-      }
-
-      .modal-sheet {
-        background: var(--surface-solid);
-        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-        width: 100%;
-        max-width: 480px;
-        padding: 0;
-        box-shadow: var(--shadow-lg);
-        overflow: hidden;
-        animation: slideUpSheet 0.35s var(--transition-smooth);
-        max-height: 90dvh;
-        overflow-y: auto;
-        border: 1px solid var(--border-glass);
-      }
-
-      @keyframes slideUpSheet {
-        from {
-          transform: translate3d(0, 100%, 0);
-          opacity: 0;
-        }
-
-        to {
-          transform: translate3d(0, 0, 0);
-          opacity: 1;
-        }
-      }
-
-      .modal-handle {
-        display: flex;
-        justify-content: center;
-        padding: 14px 0 6px;
-      }
-
-      .modal-handle-bar {
-        width: 44px;
-        height: 5px;
-        background: var(--border-subtle);
-        border-radius: var(--radius-full);
-      }
-
-      .modal-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 24px;
-        border-bottom: 1px solid var(--border-subtle);
-      }
-
-      .modal-brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .modal-logo {
-        width: 40px;
-        height: 40px;
-        border-radius: var(--radius-md);
-        background: var(--accent-gold);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        color: #0b132a;
-        font-weight: 800;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-      }
-
-      .modal-title {
-        font-family: var(--font-display);
-        font-size: 17px;
-        font-weight: 800;
-        color: var(--text-main);
-      }
-
-      .modal-sub {
-        font-size: 12px;
-        color: var(--text-muted);
-        font-weight: 500;
-      }
-
-      .close-btn {
-        width: 38px;
-        height: 38px;
-        border-radius: var(--radius-full);
-        background: var(--bg-main);
-        border: 1px solid var(--border-subtle);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        cursor: pointer;
-        color: var(--text-muted);
-        transition: all 0.2s;
-      }
-
-      .close-btn:hover {
-        background: var(--border-subtle);
-        color: var(--text-main);
-      }
-
-      .modal-body {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 22px;
-      }
-
-      .receipt-rows {
-        background: var(--bg-main);
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--border-subtle);
-        overflow: hidden;
-      }
-
-      .receipt-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 15px 20px;
-        border-bottom: 1px solid var(--border-subtle);
-        font-size: 14px;
-      }
-
-      .receipt-row:last-child {
-        border-bottom: none;
-      }
-
-      .receipt-row-label {
-        color: var(--text-muted);
-        font-weight: 600;
-      }
-
-      .receipt-row-value {
-        color: var(--text-main);
-        font-weight: 700;
-        text-align: right;
-        max-width: 60%;
-      }
-
-      .receipt-amount-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 20px;
-        background: var(--accent-gold-bg);
-        border-top: 1px solid var(--accent-gold-border);
-      }
-
-      .receipt-amount-label {
-        font-weight: 800;
-        color: var(--text-main);
-        font-family: var(--font-display);
-        font-size: 16px;
-      }
-
-      .receipt-amount-val {
-        font-family: var(--font-display);
-        font-size: 28px;
-        font-weight: 900;
-        color: var(--accent-gold);
-        letter-spacing: -0.8px;
-      }
-
-      /* ── ID CARD POPUP MODAL (CENTERED POPUP) ── */
-      .id-modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        z-index: 110;
-        background: rgba(9, 13, 22, 0.8);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        padding: 20px;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .id-modal-overlay.open {
-        display: flex;
-      }
-
-      .id-card-container {
-        background: var(--surface-solid);
-        width: 100%;
-        max-width: 370px;
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-lg);
-        overflow: hidden;
-        position: relative;
-        animation: popInSpring 0.4s var(--transition-spring);
-        color: var(--text-main);
-        border: 1px solid var(--border-glass);
-      }
-
-      @keyframes popInSpring {
-        from {
-          transform: scale(0.82) translate3d(0, 30px, 0);
-          opacity: 0;
-        }
-
-        to {
-          transform: scale(1) translate3d(0, 0, 0);
-          opacity: 1;
-        }
-      }
-
-      .id-card-top-section {
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        position: relative;
-        height: 230px;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .id-card-photo {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        position: absolute;
-        inset: 0;
-      }
-
-      .id-card-photo-fallback {
-        font-size: 68px;
-        color: rgba(255, 255, 255, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-      }
-
-      .id-card-close-x {
-        position: absolute;
-        top: 14px;
-        right: 14px;
-        z-index: 10;
-        width: 38px;
-        height: 38px;
-        border-radius: var(--radius-full);
-        background: rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-size: 16px;
-        color: #ffffff;
-        transition: transform 0.2s;
-      }
-
-      .id-card-close-x:hover {
-        transform: scale(1.1);
-      }
-
-      .id-card-brand-overlay {
-        position: absolute;
-        bottom: 14px;
-        left: 14px;
-        z-index: 5;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(9, 13, 22, 0.8);
-        backdrop-filter: blur(10px);
-        padding: 6px 16px;
-        border-radius: var(--radius-full);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-
-      .id-card-brand-logo {
-        width: 22px;
-        height: 22px;
-        background: var(--accent-gold);
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 800;
-        color: #0b132a;
-      }
-
-      .id-card-brand-text {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: #ffffff;
-      }
-
-      .id-card-content {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-      }
-
-      .id-card-name {
-        font-family: var(--font-display);
-        font-size: 24px;
-        font-weight: 800;
-        color: var(--text-main);
-        text-align: center;
-        line-height: 1.2;
-        letter-spacing: -0.4px;
-      }
-
-      .id-card-desig-wrap {
-        display: flex;
-        justify-content: center;
-      }
-
-      .id-card-desig-badge {
-        background: var(--primary-blue);
-        color: #ffffff;
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 7px 20px;
-        border-radius: var(--radius-full);
-        box-shadow: 0 6px 16px var(--primary-blue-glow);
-      }
-
-      .id-card-details {
-        background: var(--bg-main);
-        border-radius: var(--radius-lg);
-        padding: 16px 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        border: 1px solid var(--border-subtle);
-      }
-
-      .id-card-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 12.5px;
-      }
-
-      .id-card-row-label {
-        color: var(--text-muted);
-        font-weight: 600;
-      }
-
-      .id-card-row-val {
-        color: var(--text-main);
-        font-weight: 700;
-        font-family: var(--font-mono);
-      }
-
-      .id-card-role-desc {
-        font-size: 12.5px;
-        color: var(--text-main);
-        font-weight: 700;
-        text-align: center;
-        line-height: 1.45;
-        width: 100%;
-      }
-
-      .id-card-barcode-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        padding-top: 4px;
-      }
-
-      .id-card-barcode {
-        width: 85%;
-        height: 38px;
-        background: repeating-linear-gradient(
-          90deg,
+    }
+
+    .modal-handle {
+      display: flex;
+      justify-content: center;
+      padding: 14px 0 6px;
+    }
+
+    .modal-handle-bar {
+      width: 44px;
+      height: 5px;
+      background: var(--border-subtle);
+      border-radius: var(--radius-full);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .modal-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #0b132a;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .modal-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .close-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-full);
+      background: var(--bg-main);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      background: var(--border-subtle);
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .receipt-rows {
+      background: var(--bg-main);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    .receipt-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 14px;
+    }
+
+    .receipt-row:last-child {
+      border-bottom: none;
+    }
+
+    .receipt-row-label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .receipt-row-value {
+      color: var(--text-main);
+      font-weight: 700;
+      text-align: right;
+      max-width: 60%;
+    }
+
+    .receipt-amount-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      background: var(--accent-gold-bg);
+      border-top: 1px solid var(--accent-gold-border);
+    }
+
+    .receipt-amount-label {
+      font-weight: 800;
+      color: var(--text-main);
+      font-family: var(--font-display);
+      font-size: 16px;
+    }
+
+    .receipt-amount-val {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--accent-gold);
+      letter-spacing: -0.8px;
+    }
+
+    /* ── ID CARD POPUP MODAL (CENTERED POPUP) ── */
+    .id-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      background: rgba(9, 13, 22, 0.8);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .id-modal-overlay.open {
+      display: flex;
+    }
+
+    .id-card-container {
+      background: var(--surface-solid);
+      width: 100%;
+      max-width: 370px;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      position: relative;
+      animation: popInSpring 0.4s var(--transition-spring);
+      color: var(--text-main);
+      border: 1px solid var(--border-glass);
+    }
+
+    @keyframes popInSpring {
+      from {
+        transform: scale(0.82) translate3d(0, 30px, 0);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1) translate3d(0, 0, 0);
+        opacity: 1;
+      }
+    }
+
+    .id-card-top-section {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      position: relative;
+      height: 230px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .id-card-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+    }
+
+    .id-card-photo-fallback {
+      font-size: 68px;
+      color: rgba(255, 255, 255, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .id-card-close-x {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 10;
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-full);
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: #ffffff;
+      transition: transform 0.2s;
+    }
+
+    .id-card-close-x:hover {
+      transform: scale(1.1);
+    }
+
+    .id-card-brand-overlay {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(9, 13, 22, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .id-card-brand-logo {
+      width: 22px;
+      height: 22px;
+      background: var(--accent-gold);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: #0b132a;
+    }
+
+    .id-card-brand-text {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #ffffff;
+    }
+
+    .id-card-content {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .id-card-name {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.2;
+      letter-spacing: -0.4px;
+    }
+
+    .id-card-desig-wrap {
+      display: flex;
+      justify-content: center;
+    }
+
+    .id-card-desig-badge {
+      background: var(--primary-blue);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 7px 20px;
+      border-radius: var(--radius-full);
+      box-shadow: 0 6px 16px var(--primary-blue-glow);
+    }
+
+    .id-card-details {
+      background: var(--bg-main);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .id-card-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+    }
+
+    .id-card-row-label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .id-card-row-val {
+      color: var(--text-main);
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .id-card-role-desc {
+      font-size: 12.5px;
+      color: var(--text-main);
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.45;
+      width: 100%;
+    }
+
+    .id-card-barcode-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding-top: 4px;
+    }
+
+    .id-card-barcode {
+      width: 85%;
+      height: 38px;
+      background: repeating-linear-gradient(90deg,
           var(--text-main),
           var(--text-main) 2px,
           transparent 2px,
@@ -1599,1003 +1579,947 @@
           var(--text-main) 4px,
           var(--text-main) 6px,
           transparent 6px,
-          transparent 8px
-        );
-        opacity: 0.85;
+          transparent 8px);
+      opacity: 0.85;
+    }
+
+    .id-card-idnum {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      letter-spacing: 1.2px;
+      font-weight: 700;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--footer-bg);
+      color: rgba(255, 255, 255, 0.65);
+      text-align: center;
+      padding: 32px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: auto;
+      border-top: 1px solid var(--border-subtle);
+      position: relative;
+      z-index: 1;
+    }
+
+    footer strong {
+      color: #ffffff;
+      font-weight: 800;
+    }
+
+    footer .footer-yellow {
+      color: var(--accent-gold);
+      font-weight: 800;
+    }
+
+    /* ── FAB & TOASTS ── */
+    .fab-scroll-top {
+      position: fixed;
+      bottom: 28px;
+      right: 24px;
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-full);
+      background: var(--primary-blue);
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 10px 24px var(--primary-blue-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s var(--transition-smooth);
+      z-index: 30;
+    }
+
+    .fab-scroll-top.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .fab-scroll-top:hover {
+      transform: translateY(-5px) scale(1.08);
+      box-shadow: 0 14px 30px var(--primary-blue-glow);
+    }
+
+    /* ── ACCESSIBILITY: REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
       }
 
-      .id-card-idnum {
-        font-size: 11px;
-        font-family: var(--font-mono);
-        color: var(--text-muted);
-        letter-spacing: 1.2px;
-        font-weight: 700;
+      .blob {
+        display: none;
       }
+    }
 
-      /* ── FOOTER ── */
-      footer {
-        background: var(--footer-bg);
-        color: rgba(255, 255, 255, 0.65);
-        text-align: center;
-        padding: 32px 20px;
-        font-size: 13px;
-        font-weight: 500;
-        margin-top: auto;
-        border-top: 1px solid var(--border-subtle);
-        position: relative;
-        z-index: 1;
-      }
-
-      footer strong {
-        color: #ffffff;
-        font-weight: 800;
-      }
-
-      footer .footer-yellow {
-        color: var(--accent-gold);
-        font-weight: 800;
-      }
-
-      /* ── FAB & TOASTS ── */
-      .fab-scroll-top {
-        position: fixed;
-        bottom: 28px;
-        right: 24px;
-        width: 52px;
-        height: 52px;
-        border-radius: var(--radius-full);
-        background: var(--primary-blue);
-        color: #ffffff;
-        border: none;
-        box-shadow: 0 10px 24px var(--primary-blue-glow);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        opacity: 0;
+    /* ── PRINT STYLES ── */
+    @media print {
+      body * {
         visibility: hidden;
-        transition: all 0.3s var(--transition-smooth);
-        z-index: 30;
       }
 
-      .fab-scroll-top.visible {
-        opacity: 1;
+      #receipt-modal,
+      #receipt-modal *,
+      #id-card-modal,
+      #id-card-modal * {
         visibility: visible;
       }
 
-      .fab-scroll-top:hover {
-        transform: translateY(-5px) scale(1.08);
-        box-shadow: 0 14px 30px var(--primary-blue-glow);
+      #receipt-modal,
+      #id-card-modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white;
       }
+    }
 
-      /* ── ACCESSIBILITY: REDUCED MOTION ── */
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-          scroll-behavior: auto !important;
-        }
+    /* ── UTILITIES ── */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
 
-        .blob {
-          display: none;
-        }
-      }
+<body>
+  <!-- Scroll Progress Indicator -->
+  <div class="scroll-progress" id="scroll-progress"></div>
 
-      /* ── PRINT STYLES ── */
-      @media print {
-        body * {
-          visibility: hidden;
-        }
+  <!-- Ambient Light Blobs -->
+  <div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
 
-        #receipt-modal,
-        #receipt-modal *,
-        #id-card-modal,
-        #id-card-modal * {
-          visibility: visible;
-        }
+  <!-- NAVIGATION -->
+  <header class="nav">
+    <div class="nav-brand">
+      <div class="nav-logo">🏛️</div>
+      <div class="nav-title-wrap">
+        <div class="nav-name">KACM Portal</div>
+        <div class="nav-sub">Keishamthong Apunba Chaokhat Marup</div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="icon-btn" id="theme-toggle" title="Toggle Theme">
+        <i data-lucide="moon"></i>
+      </button>
+    </div>
+  </header>
 
-        #receipt-modal,
-        #id-card-modal {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          background: white;
-        }
-      }
-
-      /* ── UTILITIES ── */
-      .hidden {
-        display: none !important;
-      }
-    </style>
-  </head>
-
-  <body>
-    <!-- Scroll Progress Indicator -->
-    <div class="scroll-progress" id="scroll-progress"></div>
-
-    <!-- Ambient Light Blobs -->
-    <div class="bg-blobs">
-      <div class="blob blob-1"></div>
-      <div class="blob blob-2"></div>
-      <div class="blob blob-3"></div>
+  <!-- MAIN CONTAINER -->
+  <main>
+    <!-- LOADING STATE -->
+    <div id="loading-state" class="state-card">
+      <div class="state-icon loading">
+        <div class="spinner"></div>
+      </div>
+      <div class="state-title">Fetching your details…</div>
+      <div class="state-body">
+        Retrieving verified member data from the KACM central register.
+      </div>
     </div>
 
-    <!-- NAVIGATION -->
-    <header class="nav">
-      <div class="nav-brand">
-        <div class="nav-logo">🏛️</div>
-        <div class="nav-title-wrap">
-          <div class="nav-name">KACM Portal</div>
-          <div class="nav-sub">Keishamthong Apunba Chaokhat Marup</div>
-        </div>
+    <!-- ERROR STATE -->
+    <div id="error-state" class="state-card hidden">
+      <div class="state-icon error">⚠️</div>
+      <div class="state-title" id="error-title">Member Not Found</div>
+      <div class="state-body" id="error-message">
+        No phone number was provided in the URL.
       </div>
-      <div class="nav-actions">
-        <button class="icon-btn" id="theme-toggle" title="Toggle Theme">
-          <i data-lucide="moon"></i>
-        </button>
-      </div>
-    </header>
+    </div>
 
-    <!-- MAIN CONTAINER -->
-    <main>
-      <!-- LOADING STATE -->
-      <div id="loading-state" class="state-card">
-        <div class="state-icon loading">
-          <div class="spinner"></div>
-        </div>
-        <div class="state-title">Fetching your details…</div>
-        <div class="state-body">
-          Retrieving verified member data from the KACM central register.
-        </div>
-      </div>
-
-      <!-- ERROR STATE -->
-      <div id="error-state" class="state-card hidden">
-        <div class="state-icon error">⚠️</div>
-        <div class="state-title" id="error-title">Member Not Found</div>
-        <div class="state-body" id="error-message">
-          No phone number was provided in the URL.
-        </div>
-      </div>
-
-      <!-- PORTAL CONTENT -->
-      <div
-        id="portal-content"
-        class="hidden"
-        style="display: none; flex-direction: column; gap: 24px"
-      >
-        <!-- PROFILE HERO CARD -->
-        <div class="profile-card">
-          <div class="profile-inner">
-            <div class="greeting-header">
-              <span class="live-dot"></span>
-              <span id="time-greeting">Welcome back</span> •
-              <span id="live-clock">--:--</span>
+    <!-- PORTAL CONTENT -->
+    <div id="portal-content" class="hidden" style="display: none; flex-direction: column; gap: 24px">
+      <!-- PROFILE HERO CARD -->
+      <div class="profile-card">
+        <div class="profile-inner">
+          <div class="greeting-header">
+            <span class="live-dot"></span>
+            <span id="time-greeting">Welcome back</span> •
+            <span id="live-clock">--:--</span>
+          </div>
+          <div class="profile-tags">
+            <span class="tag tag-blue">🏛️ KACM Registered</span>
+            <span id="core-team-badge" class="tag tag-yellow hidden">⭐ <span id="core-team-role">Executive</span></span>
+          </div>
+          <div class="profile-row">
+            <div class="avatar-wrap" id="avatar-container">
+              <span id="avatar-fallback">👤</span>
+              <img id="avatar-img" src="" alt="Member Photo" />
             </div>
-            <div class="profile-tags">
-              <span class="tag tag-blue">🏛️ KACM Registered</span>
-              <span id="core-team-badge" class="tag tag-yellow hidden"
-                >⭐ <span id="core-team-role">Executive</span></span
-              >
-            </div>
-            <div class="profile-row">
-              <div class="avatar-wrap" id="avatar-container">
-                <span id="avatar-fallback">👤</span>
-                <img id="avatar-img" src="" alt="Member Photo" />
-              </div>
-              <div class="profile-info">
-                <div class="profile-name" id="member-name">—</div>
-                <div class="meta-chips">
-                  <span class="meta-chip"
-                    >👤 <span id="gender-val">—</span></span
-                  >
-                  <span class="meta-chip"
-                    >📞 <span id="phone-val">—</span></span
-                  >
-                  <span id="email-chip" class="meta-chip hidden"
-                    >✉️ <span id="email-val">—</span></span
-                  >
-                </div>
+            <div class="profile-info">
+              <div class="profile-name" id="member-name">—</div>
+              <div class="meta-chips">
+                <span class="meta-chip">👤 <span id="gender-val">—</span></span>
+                <span class="meta-chip">📞 <span id="phone-val">—</span></span>
+                <span id="email-chip" class="meta-chip hidden">✉️ <span id="email-val">—</span></span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- KPI STRIP -->
-        <div class="kpi-strip">
-          <div class="kpi-card">
-            <div class="kpi-icon yellow">💰</div>
-            <div class="kpi-value" id="kpi-total-amount">₹0</div>
-            <div class="kpi-label">Total Paid</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon blue">🏷️</div>
-            <div class="kpi-value" id="kpi-categories">0</div>
-            <div class="kpi-label">Funds</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon teal">🔄</div>
-            <div class="kpi-value" id="kpi-transactions">0</div>
-            <div class="kpi-label">Receipts</div>
-          </div>
+      <!-- KPI STRIP -->
+      <div class="kpi-strip">
+        <div class="kpi-card">
+          <div class="kpi-icon yellow">💰</div>
+          <div class="kpi-value" id="kpi-total-amount">₹0</div>
+          <div class="kpi-label">Total Paid</div>
         </div>
+        <div class="kpi-card">
+          <div class="kpi-icon blue">🏷️</div>
+          <div class="kpi-value" id="kpi-categories">0</div>
+          <div class="kpi-label">Funds</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon teal">🔄</div>
+          <div class="kpi-value" id="kpi-transactions">0</div>
+          <div class="kpi-label">Receipts</div>
+        </div>
+      </div>
 
-        <!-- CONTRIBUTIONS SECTION (FULL-WIDTH TOUCHING MOBILE EDGES) -->
-        <div class="contrib-section">
-          <div class="contrib-section-header">
-            <div class="section-header">
-              <div class="section-title">
-                <div class="icon">💳</div>
-                Contributions
-                <span
-                  style="
+      <!-- CONTRIBUTIONS SECTION (FULL-WIDTH TOUCHING MOBILE EDGES) -->
+      <div class="contrib-section">
+        <div class="contrib-section-header">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="icon">💳</div>
+              Contributions
+              <span style="
                     font-weight: 600;
                     font-size: 12px;
                     color: var(--text-muted);
-                  "
-                  >(last 10)</span
-                >
-              </div>
-              <span class="count-pill" id="contrib-count-badge">0 Records</span>
+                  ">(last 10)</span>
             </div>
-            <div class="swipe-hint">
-              <span>Payment Vouchers</span>
-              <span>← Swipe to view →</span>
-            </div>
+            <span class="count-pill" id="contrib-count-badge">0 Records</span>
           </div>
-          <div class="cards-track" id="cards-track">
-            <div class="cards-row" id="contrib-cards-container"></div>
+          <div class="swipe-hint">
+            <span>Payment Vouchers</span>
+            <span>← Swipe to view →</span>
           </div>
-          <div
-            id="no-contribs-msg"
-            class="state-card hidden"
-            style="
+        </div>
+        <div class="cards-track" id="cards-track">
+          <div class="cards-row" id="contrib-cards-container"></div>
+        </div>
+        <div id="no-contribs-msg" class="state-card hidden" style="
               padding: 36px;
               border: none;
               background: transparent;
               box-shadow: none;
-            "
-          >
-            <div
-              class="state-icon"
-              style="
+            ">
+          <div class="state-icon" style="
                 background: var(--accent-gold-bg);
                 color: var(--accent-gold);
-              "
-            >
-              🧾
-            </div>
-            <div class="state-title" style="font-size: 17px">
-              No contribution records yet
-            </div>
-            <div class="state-body">
-              Payments will appear here once recorded in the portal system.
-            </div>
+              ">
+            🧾
+          </div>
+          <div class="state-title" style="font-size: 17px">
+            No contribution records yet
+          </div>
+          <div class="state-body">
+            Payments will appear here once recorded in the portal system.
           </div>
         </div>
+      </div>
 
-        <!-- EXECUTIVE TEAM SECTION -->
-        <div class="team-section">
-          <div class="section-header">
-            <div class="section-title">
-              <div
-                class="icon"
-                style="
+      <!-- EXECUTIVE TEAM SECTION -->
+      <div class="team-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="icon" style="
                   background: var(--accent-gold-bg);
                   color: var(--accent-gold);
-                "
-              >
-                🏛️
-              </div>
-              Executive Team
+                ">
+              🏛️
             </div>
-            <span
-              class="count-pill"
-              style="
+            Executive Team
+          </div>
+          <span class="count-pill" style="
                 background: var(--accent-gold-bg);
                 color: var(--accent-gold);
                 border-color: var(--accent-gold-border);
-              "
-              >Committee</span
-            >
-          </div>
-          <div class="team-grid" id="core-team-grid"></div>
+              ">Committee</span>
         </div>
-
-        <!-- GET IN TOUCH CTA -->
-        <div class="cta-section">
-          <a
-            href="https://forms.gle/F8VktD9nYpw1uPyM9"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-get-in-touch"
-          >
-            <span>💬 Get in touch with KACM</span>
-            <i data-lucide="arrow-right" style="width: 20px; height: 20px"></i>
-          </a>
-        </div>
+        <div class="team-grid" id="core-team-grid"></div>
       </div>
-    </main>
 
-    <!-- FAB SCROLL TO TOP -->
-    <button class="fab-scroll-top" id="fab-top" title="Scroll to top">
-      <i data-lucide="arrow-up"></i>
-    </button>
-
-    <!-- RECEIPT MODAL (BOTTOM SHEET) -->
-    <div id="receipt-modal" class="modal-overlay">
-      <div class="modal-sheet">
-        <div class="modal-handle">
-          <div class="modal-handle-bar"></div>
-        </div>
-        <div class="modal-header">
-          <div class="modal-brand">
-            <div class="modal-logo">🏛️</div>
-            <div>
-              <div class="modal-title">Payment Receipt</div>
-              <div class="modal-sub">Keishamthong Apunba Chaokhat Marup</div>
-            </div>
-          </div>
-          <button class="close-btn" id="close-receipt-btn">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="receipt-rows">
-            <div class="receipt-row">
-              <span class="receipt-row-label">Receipt No.</span>
-              <span
-                class="receipt-row-value"
-                id="rcpt-id"
-                style="font-family: var(--font-mono)"
-                >—</span
-              >
-            </div>
-            <div class="receipt-row">
-              <span class="receipt-row-label">Member</span>
-              <span class="receipt-row-value" id="rcpt-member">—</span>
-            </div>
-            <div class="receipt-row">
-              <span class="receipt-row-label">Category</span>
-              <span
-                class="receipt-row-value"
-                id="rcpt-category"
-                style="color: var(--primary-blue-light)"
-                >—</span
-              >
-            </div>
-            <div class="receipt-row">
-              <span class="receipt-row-label">Date</span>
-              <span class="receipt-row-value" id="rcpt-date">—</span>
-            </div>
-            <div class="receipt-row">
-              <span class="receipt-row-label">Mode</span>
-              <span class="receipt-row-value" id="rcpt-mode">—</span>
-            </div>
-            <div class="receipt-amount-row">
-              <span class="receipt-amount-label">Amount Paid</span>
-              <span class="receipt-amount-val" id="rcpt-amount">₹0</span>
-            </div>
-          </div>
-          <div style="padding-bottom: 10px">
-            <button
-              onclick="printReceiptFromModal()"
-              class="btn btn-primary"
-              style="width: 100%; padding: 16px"
-            >
-              📄 Download Receipt
-            </button>
-          </div>
-        </div>
+      <!-- GET IN TOUCH CTA -->
+      <div class="cta-section">
+        <a href="https://forms.gle/F8VktD9nYpw1uPyM9" target="_blank" rel="noopener noreferrer"
+          class="btn-get-in-touch">
+          <span>💬 Get in touch with KACM</span>
+          <i data-lucide="arrow-right" style="width: 20px; height: 20px"></i>
+        </a>
       </div>
     </div>
+  </main>
 
-    <!-- ID CARD MODAL (CENTERED POPUP) -->
-    <div id="id-card-modal" class="id-modal-overlay">
-      <div class="id-card-container">
-        <button class="id-card-close-x" id="close-id-modal-btn">✕</button>
-        <div class="id-card-top-section">
-          <div class="id-card-photo-fallback" id="id-card-fallback">👤</div>
-          <img
-            id="id-card-img"
-            class="id-card-photo"
-            src=""
-            alt="Team Member"
-            style="display: none"
-          />
-          <div class="id-card-brand-overlay">
-            <div class="id-card-brand-logo">🏛️</div>
-            <div class="id-card-brand-text">KACM Official</div>
-          </div>
-        </div>
-        <div class="id-card-content">
+  <!-- FAB SCROLL TO TOP -->
+  <button class="fab-scroll-top" id="fab-top" title="Scroll to top">
+    <i data-lucide="arrow-up"></i>
+  </button>
+
+  <!-- RECEIPT MODAL (BOTTOM SHEET) -->
+  <div id="receipt-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-handle">
+        <div class="modal-handle-bar"></div>
+      </div>
+      <div class="modal-header">
+        <div class="modal-brand">
+          <div class="modal-logo">🏛️</div>
           <div>
-            <div class="id-card-name" id="id-card-name">—</div>
-            <div style="height: 10px"></div>
-            <div class="id-card-desig-wrap">
-              <span class="id-card-desig-badge" id="id-card-desig">—</span>
-            </div>
+            <div class="modal-title">Payment Receipt</div>
+            <div class="modal-sub">Keishamthong Apunba Chaokhat Marup</div>
           </div>
-          <div class="id-card-details">
-            <div class="id-card-role-desc" id="id-card-role-val">—</div>
-            <div class="id-card-row">
-              <span class="id-card-row-label">Email</span>
-              <span class="id-card-row-val" id="id-card-email-val">—</span>
-            </div>
-            <div class="id-card-row">
-              <span class="id-card-row-label">Phone</span>
-              <span class="id-card-row-val" id="id-card-phone-val">—</span>
-            </div>
+        </div>
+        <button class="close-btn" id="close-receipt-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="receipt-rows">
+          <div class="receipt-row">
+            <span class="receipt-row-label">Receipt No.</span>
+            <span class="receipt-row-value" id="rcpt-id" style="font-family: var(--font-mono)">—</span>
           </div>
-          <div class="id-card-barcode-section">
-            <div class="id-card-barcode"></div>
-            <div class="id-card-idnum" id="id-card-id-num">
-              ID: KACM-OFFICIAL-001
-            </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Member</span>
+            <span class="receipt-row-value" id="rcpt-member">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Category</span>
+            <span class="receipt-row-value" id="rcpt-category" style="color: var(--primary-blue-light)">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Date</span>
+            <span class="receipt-row-value" id="rcpt-date">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Mode</span>
+            <span class="receipt-row-value" id="rcpt-mode">—</span>
+          </div>
+          <div class="receipt-amount-row">
+            <span class="receipt-amount-label">Amount Paid</span>
+            <span class="receipt-amount-val" id="rcpt-amount">₹0</span>
+          </div>
+        </div>
+        <div style="padding-bottom: 10px">
+          <button onclick="printReceiptFromModal()" class="btn btn-primary" style="width: 100%; padding: 16px">
+            📄 Download Receipt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ID CARD MODAL (CENTERED POPUP) -->
+  <div id="id-card-modal" class="id-modal-overlay">
+    <div class="id-card-container">
+      <button class="id-card-close-x" id="close-id-modal-btn">✕</button>
+      <div class="id-card-top-section">
+        <div class="id-card-photo-fallback" id="id-card-fallback">👤</div>
+        <img id="id-card-img" class="id-card-photo" src="" alt="Team Member" style="display: none" />
+        <div class="id-card-brand-overlay">
+          <div class="id-card-brand-logo">🏛️</div>
+          <div class="id-card-brand-text">KACM Official</div>
+        </div>
+      </div>
+      <div class="id-card-content">
+        <div>
+          <div class="id-card-name" id="id-card-name">—</div>
+          <div style="height: 10px"></div>
+          <div class="id-card-desig-wrap">
+            <span class="id-card-desig-badge" id="id-card-desig">—</span>
+          </div>
+        </div>
+        <div class="id-card-details">
+          <div class="id-card-role-desc" id="id-card-role-val">—</div>
+          <div class="id-card-row">
+            <span class="id-card-row-label">Email</span>
+            <span class="id-card-row-val" id="id-card-email-val">—</span>
+          </div>
+          <div class="id-card-row">
+            <span class="id-card-row-label">Phone</span>
+            <span class="id-card-row-val" id="id-card-phone-val">—</span>
+          </div>
+        </div>
+        <div class="id-card-barcode-section">
+          <div class="id-card-barcode"></div>
+          <div class="id-card-idnum" id="id-card-id-num">
+            ID: KACM-OFFICIAL-001
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- FOOTER -->
-    <footer>
-      <strong>Keishamthong Apunba Chaokhat Marup</strong> (KACM)<br />
-      <span
-        style="
+  <!-- FOOTER -->
+  <footer>
+    <strong>Keishamthong Apunba Chaokhat Marup</strong> (KACM)<br />
+    <span style="
           font-size: 12px;
           color: rgba(255, 255, 255, 0.45);
           margin-top: 6px;
           display: inline-block;
-        "
-        >© 2026 KACM · Official Member Portal · Built with
-        <span class="footer-yellow">♥</span></span
-      >
-    </footer>
+        ">© 2026 KACM · Official Member Portal · Built with
+      <span class="footer-yellow">♥</span></span>
+  </footer>
 
-    <script>
-      // Initialize Lucide Icons
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    const SPREADSHEET_ID = "1yqBz_fRFmtvT8LhIyltwDv7w1ePgNtI-RqrAYWs_kLk";
+    let activeReceiptInvoiceUrl = "";
+    let coreTeamGlobalList = [];
+
+    // Theme Toggle Logic
+    const themeToggleBtn = document.getElementById("theme-toggle");
+    themeToggleBtn.addEventListener("click", () => {
+      const currentTheme =
+        document.documentElement.getAttribute("data-theme");
+      const newTheme = currentTheme === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", newTheme);
+      themeToggleBtn.innerHTML =
+        newTheme === "dark"
+          ? '<i data-lucide="sun"></i>'
+          : '<i data-lucide="moon"></i>';
       lucide.createIcons();
+    });
 
-      const SPREADSHEET_ID = "1yqBz_fRFmtvT8LhIyltwDv7w1ePgNtI-RqrAYWs_kLk";
-      let activeReceiptInvoiceUrl = "";
-      let coreTeamGlobalList = [];
+    // Time Greeting & Live Clock
+    function updateTimeGreeting() {
+      const now = new Date();
+      const hours = now.getHours();
+      let greeting = "Welcome back";
+      if (hours < 12) greeting = "Good morning";
+      else if (hours < 18) greeting = "Good afternoon";
+      else greeting = "Good evening";
 
-      // Theme Toggle Logic
-      const themeToggleBtn = document.getElementById("theme-toggle");
-      themeToggleBtn.addEventListener("click", () => {
-        const currentTheme =
-          document.documentElement.getAttribute("data-theme");
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
-        document.documentElement.setAttribute("data-theme", newTheme);
-        themeToggleBtn.innerHTML =
-          newTheme === "dark"
-            ? '<i data-lucide="sun"></i>'
-            : '<i data-lucide="moon"></i>';
-        lucide.createIcons();
-      });
+      const greetingEl = document.getElementById("time-greeting");
+      if (greetingEl) greetingEl.textContent = greeting;
 
-      // Time Greeting & Live Clock
-      function updateTimeGreeting() {
-        const now = new Date();
-        const hours = now.getHours();
-        let greeting = "Welcome back";
-        if (hours < 12) greeting = "Good morning";
-        else if (hours < 18) greeting = "Good afternoon";
-        else greeting = "Good evening";
-
-        const greetingEl = document.getElementById("time-greeting");
-        if (greetingEl) greetingEl.textContent = greeting;
-
-        const clockEl = document.getElementById("live-clock");
-        if (clockEl) {
-          clockEl.textContent = now.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        }
+      const clockEl = document.getElementById("live-clock");
+      if (clockEl) {
+        clockEl.textContent = now.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
       }
-      setInterval(updateTimeGreeting, 1000);
-      updateTimeGreeting();
+    }
+    setInterval(updateTimeGreeting, 1000);
+    updateTimeGreeting();
 
-      // Scroll Progress & FAB Scroll Top
-      const scrollProgress = document.getElementById("scroll-progress");
-      const fabTop = document.getElementById("fab-top");
+    // Scroll Progress & FAB Scroll Top
+    const scrollProgress = document.getElementById("scroll-progress");
+    const fabTop = document.getElementById("fab-top");
 
-      window.addEventListener("scroll", () => {
-        const winScroll =
-          document.body.scrollTop || document.documentElement.scrollTop;
-        const height =
-          document.documentElement.scrollHeight -
-          document.documentElement.clientHeight;
-        const scrolled = (winScroll / height) * 100;
-        if (scrollProgress) scrollProgress.style.width = scrolled + "%";
+    window.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (scrollProgress) scrollProgress.style.width = scrolled + "%";
 
-        if (winScroll > 300) fabTop.classList.add("visible");
-        else fabTop.classList.remove("visible");
-      });
+      if (winScroll > 300) fabTop.classList.add("visible");
+      else fabTop.classList.remove("visible");
+    });
 
-      fabTop.addEventListener("click", () => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
+    fabTop.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
 
-      // Helper to standardize and transform Google Drive photo URLs into direct viewable image URLs
-      function formatDriveUrl(url) {
-        if (!url || typeof url !== "string") return "";
-        url = url.trim();
-        if (!url.startsWith("http")) return "";
+    // Helper to standardize and transform Google Drive photo URLs into direct viewable image URLs
+    function formatDriveUrl(url) {
+      if (!url || typeof url !== "string") return "";
+      url = url.trim();
+      if (!url.startsWith("http")) return "";
 
-        let fileId = "";
-        if (url.includes("drive.google.com/open?id=")) {
-          fileId = url.split("id=")[1]?.split("&")[0];
-        } else if (url.includes("drive.google.com/file/d/")) {
-          fileId = url.split("/file/d/")[1]?.split("/")[0];
-        } else if (url.includes("drive.google.com/uc?")) {
-          const match = url.match(/id=([^&]+)/);
-          if (match) fileId = match[1];
-        } else if (url.includes("lh3.googleusercontent.com/d/")) {
-          return url;
-        }
-
-        if (fileId) {
-          return `https://lh3.googleusercontent.com/d/${fileId}=s400`;
-        }
+      let fileId = "";
+      if (url.includes("drive.google.com/open?id=")) {
+        fileId = url.split("id=")[1]?.split("&")[0];
+      } else if (url.includes("drive.google.com/file/d/")) {
+        fileId = url.split("/file/d/")[1]?.split("/")[0];
+      } else if (url.includes("drive.google.com/uc?")) {
+        const match = url.match(/id=([^&]+)/);
+        if (match) fileId = match[1];
+      } else if (url.includes("lh3.googleusercontent.com/d/")) {
         return url;
       }
 
-      async function fetchSheetData(sheetName) {
-        const cacheBuster = Date.now();
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&t=${cacheBuster}`;
-        const res = await fetch(url, {
-          cache: "no-store",
-          headers: { Pragma: "no-cache", "Cache-Control": "no-cache" },
-        });
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-        const text = await res.text();
-        const match = text.match(
-          /google\.visualization\.Query\.setResponse\(([\s\S]*)\);/,
-        );
-        if (!match) throw new Error(`Could not parse sheet ${sheetName}`);
-        const data = JSON.parse(match[1]);
-        return data.table ? data.table.rows : [];
+      if (fileId) {
+        return `https://lh3.googleusercontent.com/d/${fileId}=s400`;
       }
+      return url;
+    }
 
-      function cleanDigits(str) {
-        return str ? String(str).replace(/\D/g, "").trim() : "";
-      }
+    async function fetchSheetData(sheetName) {
+      const cacheBuster = Date.now();
+      const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&t=${cacheBuster}`;
+      const res = await fetch(url, {
+        cache: "no-store",
+        headers: { Pragma: "no-cache", "Cache-Control": "no-cache" },
+      });
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const text = await res.text();
+      const match = text.match(
+        /google\.visualization\.Query\.setResponse\(([\s\S]*)\);/,
+      );
+      if (!match) throw new Error(`Could not parse sheet ${sheetName}`);
+      const data = JSON.parse(match[1]);
+      return data.table ? data.table.rows : [];
+    }
 
-      function formatDateTimeCell(cell) {
-        if (!cell) return { formatted: "—", timestamp: 0 };
-        let d = null;
-        const val =
-          typeof cell === "object"
-            ? String(cell.v || cell.f || "")
-            : String(cell || "");
-        if (val.startsWith("Date(")) {
-          const parts = val.match(/\d+/g);
-          if (parts && parts.length >= 3) {
-            const [year, month, day, h = 0, m = 0, s = 0] = parts.map(Number);
-            d = new Date(year, month, day, h, m, s);
-          }
-        } else if (cell && cell.v instanceof Date) {
-          d = cell.v;
-        } else if (val) {
-          const match = val
-            .trim()
-            .match(
-              /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s*(AM|PM))?)?/i,
-            );
-          if (match) {
-            const [, day, month, year, h = "0", m = "0", s = "0", ampm] = match;
-            let hours = parseInt(h, 10);
-            if (ampm?.toUpperCase() === "PM" && hours < 12) hours += 12;
-            if (ampm?.toUpperCase() === "AM" && hours === 12) hours = 0;
-            d = new Date(
-              parseInt(year, 10),
-              parseInt(month, 10) - 1,
-              parseInt(day, 10),
-              hours,
-              parseInt(m, 10),
-              parseInt(s, 10),
-            );
-          } else {
-            const parsed = Date.parse(val);
-            if (!isNaN(parsed)) d = new Date(parsed);
-          }
+    function cleanDigits(str) {
+      return str ? String(str).replace(/\D/g, "").trim() : "";
+    }
+
+    function formatDateTimeCell(cell) {
+      if (!cell) return { formatted: "—", timestamp: 0 };
+      let d = null;
+      const val =
+        typeof cell === "object"
+          ? String(cell.v || cell.f || "")
+          : String(cell || "");
+      if (val.startsWith("Date(")) {
+        const parts = val.match(/\d+/g);
+        if (parts && parts.length >= 3) {
+          const [year, month, day, h = 0, m = 0, s = 0] = parts.map(Number);
+          d = new Date(year, month, day, h, m, s);
         }
-        if (!d || isNaN(d.getTime()))
-          return { formatted: val || "—", timestamp: 0 };
-        const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-        ];
-        let h = d.getHours();
-        const ap = h >= 12 ? "PM" : "AM";
-        h = h % 12 || 12;
-        return {
-          formatted: `${String(d.getDate()).padStart(2, "0")}-${months[d.getMonth()]}-${d.getFullYear()} ${String(h).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} ${ap}`,
-          timestamp: d.getTime(),
-        };
-      }
-
-      function getTeamTheme(designation, index) {
-        const d = (designation || "").toLowerCase();
-        if (d.includes("president") || d.includes("chair"))
-          return {
-            avatarBg: "#f59e0b",
-            initColor: "#ffffff",
-            desig:
-              "background:rgba(245, 158, 11, 0.15); border-color:rgba(245, 158, 11, 0.4); color:#f59e0b;",
-          };
-        if (d.includes("secretary"))
-          return {
-            avatarBg: "#1d4ed8",
-            initColor: "#ffffff",
-            desig:
-              "background:rgba(29, 78, 216, 0.15); border-color:rgba(29, 78, 216, 0.4); color:#3b82f6;",
-          };
-        if (d.includes("treasurer") || d.includes("finance"))
-          return {
-            avatarBg: "#0d9488",
-            initColor: "#ffffff",
-            desig:
-              "background:rgba(13, 148, 136, 0.15); border-color:rgba(13, 148, 136, 0.4); color:#0d9488;",
-          };
-        const themes = [
-          {
-            avatarBg: "#8b5cf6",
-            initColor: "#ffffff",
-            desig:
-              "background:rgba(139, 92, 246, 0.15); border-color:rgba(139, 92, 246, 0.4); color:#8b5cf6;",
-          },
-          {
-            avatarBg: "#ec4899",
-            initColor: "#ffffff",
-            desig:
-              "background:rgba(236, 72, 153, 0.15); border-color:rgba(236, 72, 153, 0.4); color:#ec4899;",
-          },
-          {
-            avatarBg: "#f97316",
-            initColor: "#ffffff",
-            desig:
-              "background:rgba(249, 115, 22, 0.15); border-color:rgba(249, 115, 22, 0.4); color:#f97316;",
-          },
-        ];
-        return themes[index % themes.length];
-      }
-
-      async function initPortal() {
-        const loadingEl = document.getElementById("loading-state");
-        const errorEl = document.getElementById("error-state");
-        const errorMsgEl = document.getElementById("error-message");
-        const portalEl = document.getElementById("portal-content");
-
-        const urlParams = new URLSearchParams(window.location.search);
-        let phone = cleanDigits(urlParams.get("phone"));
-
-        // Fallback demo phone number if none is supplied in URL
-        if (!phone) {
-          phone = "9856271310";
-        }
-
-        try {
-          // 1. Member lookup
-          const memberRows = await fetchSheetData("Form Responses 1");
-          let member = null;
-          for (const r of memberRows) {
-            if (!r?.c) continue;
-            const rowPhone = cleanDigits(r.c[4]?.v ?? r.c[3]?.v ?? "");
-            if (
-              rowPhone &&
-              (rowPhone === phone ||
-                (rowPhone.length >= 10 &&
-                  phone.length >= 10 &&
-                  rowPhone.slice(-10) === phone.slice(-10)))
-            ) {
-              member = {
-                registeredAt: formatDateTimeCell(r.c[0]).formatted,
-                email: String(r.c[1]?.v || ""),
-                name: String(r.c[2]?.v || "Member"),
-                gender: String(r.c[3]?.v || "-"),
-                phone: String(r.c[4]?.v || phone),
-                photoUrl: formatDriveUrl(r.c[5]?.v || r.c[6]?.v || ""),
-              };
-              break;
-            }
-          }
-
-          // Process form members list to match photos cleanly
-          const allFormMembers = memberRows
-            .map((r) => {
-              if (!r?.c) return null;
-              const fmEmail = String(r.c[1]?.v || "").trim();
-              const fmName = String(r.c[2]?.v || "").trim();
-              const fmPhone = cleanDigits(r.c[4]?.v ?? r.c[3]?.v ?? "");
-              const fmPhoto = formatDriveUrl(r.c[5]?.v || r.c[6]?.v || "");
-              return {
-                email: fmEmail,
-                name: fmName,
-                phone: fmPhone,
-                photoUrl: fmPhoto,
-              };
-            })
-            .filter(Boolean);
-
-          if (!member) {
-            // Fallback dummy member if lookup misses
-            member = {
-              registeredAt: "01-Jan-2026",
-              email: "member@kacm.org",
-              name: "Keisham Premkumar",
-              gender: "Male",
-              phone: phone,
-              photoUrl: "",
-            };
-            // Match photo from registered form responses if available
-            const matchedFm = allFormMembers.find(
-              (fm) =>
-                (fm.phone && fm.phone.slice(-10) === phone.slice(-10)) ||
-                (fm.name &&
-                  member.name &&
-                  fm.name.toLowerCase().includes(member.name.toLowerCase())),
-            );
-            if (matchedFm && matchedFm.photoUrl) {
-              member.photoUrl = matchedFm.photoUrl;
-            }
-          }
-
-          // 2. Contributions
-          const contribRows = await fetchSheetData("Contributions");
-          let userContributions = [];
-          for (const cr of contribRows) {
-            if (!cr?.c) continue;
-            const memberKey = String(cr.c[1]?.v || "");
-            const cPhone = cleanDigits(memberKey);
-            if (
-              !(cPhone && cPhone.slice(-10) === phone.slice(-10)) &&
-              !memberKey.toLowerCase().includes(member.name.toLowerCase())
-            )
-              continue;
-
-            const id = String(
-              cr.c[0]?.v || Math.random().toString(36).slice(7),
-            );
-            const categoryName = String(
-              cr.c[14]?.v || cr.c[2]?.v || "General Contribution",
-            );
-            const dtObj = formatDateTimeCell(cr.c[3]);
-            const frequency = String(cr.c[4]?.v || "One Time");
-            const amount = parseFloat(cr.c[5]?.v) || 0;
-            const remarks = String(cr.c[6]?.v || "");
-            const paymentVia = String(cr.c[11]?.v || "Online / UPI");
-            let invoiceUrl = "";
-            if (cr.c[13]?.v && String(cr.c[13].v).startsWith("http")) {
-              invoiceUrl = String(cr.c[13].v).trim();
-            } else {
-              for (let i = cr.c.length - 1; i >= 0; i--) {
-                const v = String(cr.c[i]?.v || "").trim();
-                if (v.startsWith("http")) {
-                  invoiceUrl = v;
-                  break;
-                }
-              }
-            }
-            userContributions.push({
-              id,
-              categoryName,
-              dateStr: dtObj.formatted,
-              timestamp: dtObj.timestamp,
-              frequency,
-              amount,
-              paymentVia,
-              remarks,
-              invoiceUrl,
-            });
-          }
-          userContributions.sort(
-            (a, b) => (b.timestamp || 0) - (a.timestamp || 0),
+      } else if (cell && cell.v instanceof Date) {
+        d = cell.v;
+      } else if (val) {
+        const match = val
+          .trim()
+          .match(
+            /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s*(AM|PM))?)?/i,
           );
+        if (match) {
+          const [, day, month, year, h = "0", m = "0", s = "0", ampm] = match;
+          let hours = parseInt(h, 10);
+          if (ampm?.toUpperCase() === "PM" && hours < 12) hours += 12;
+          if (ampm?.toUpperCase() === "AM" && hours === 12) hours = 0;
+          d = new Date(
+            parseInt(year, 10),
+            parseInt(month, 10) - 1,
+            parseInt(day, 10),
+            hours,
+            parseInt(m, 10),
+            parseInt(s, 10),
+          );
+        } else {
+          const parsed = Date.parse(val);
+          if (!isNaN(parsed)) d = new Date(parsed);
+        }
+      }
+      if (!d || isNaN(d.getTime()))
+        return { formatted: val || "—", timestamp: 0 };
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      let h = d.getHours();
+      const ap = h >= 12 ? "PM" : "AM";
+      h = h % 12 || 12;
+      return {
+        formatted: `${String(d.getDate()).padStart(2, "0")}-${months[d.getMonth()]}-${d.getFullYear()} ${String(h).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} ${ap}`,
+        timestamp: d.getTime(),
+      };
+    }
 
-          // 3. Core Team
-          const coreRows = await fetchSheetData("Core Team");
-          let coreRole = null;
+    function getTeamTheme(designation, index) {
+      const d = (designation || "").toLowerCase();
+      if (d.includes("president") || d.includes("chair"))
+        return {
+          avatarBg: "#f59e0b",
+          initColor: "#ffffff",
+          desig:
+            "background:rgba(245, 158, 11, 0.15); border-color:rgba(245, 158, 11, 0.4); color:#f59e0b;",
+        };
+      if (d.includes("secretary"))
+        return {
+          avatarBg: "#1d4ed8",
+          initColor: "#ffffff",
+          desig:
+            "background:rgba(29, 78, 216, 0.15); border-color:rgba(29, 78, 216, 0.4); color:#3b82f6;",
+        };
+      if (d.includes("treasurer") || d.includes("finance"))
+        return {
+          avatarBg: "#0d9488",
+          initColor: "#ffffff",
+          desig:
+            "background:rgba(13, 148, 136, 0.15); border-color:rgba(13, 148, 136, 0.4); color:#0d9488;",
+        };
+      const themes = [
+        {
+          avatarBg: "#8b5cf6",
+          initColor: "#ffffff",
+          desig:
+            "background:rgba(139, 92, 246, 0.15); border-color:rgba(139, 92, 246, 0.4); color:#8b5cf6;",
+        },
+        {
+          avatarBg: "#ec4899",
+          initColor: "#ffffff",
+          desig:
+            "background:rgba(236, 72, 153, 0.15); border-color:rgba(236, 72, 153, 0.4); color:#ec4899;",
+        },
+        {
+          avatarBg: "#f97316",
+          initColor: "#ffffff",
+          desig:
+            "background:rgba(249, 115, 22, 0.15); border-color:rgba(249, 115, 22, 0.4); color:#f97316;",
+        },
+      ];
+      return themes[index % themes.length];
+    }
 
-          coreTeamGlobalList = [];
-          for (const tr of coreRows) {
-            if (!tr?.c) continue;
-            const cell0 = String(tr.c[0]?.v || "");
-            const cell1 = String(tr.c[1]?.v || "");
-            const cell2 = String(tr.c[2]?.v || "");
-            const cell3 = String(tr.c[3]?.v || "");
-            if (
-              cell0.toLowerCase().includes("designation") ||
-              cell1.toLowerCase().includes("designation")
-            )
-              continue;
-            const designation = cell1 || cell0;
-            if (!designation || designation === "—") continue;
-            const cPhone = cleanDigits(cell3);
-            const cName = cell3 ? cell3.split(":")[0].trim() : "Vacant";
-            if (cPhone && cPhone.slice(-10) === phone.slice(-10))
-              coreRole = designation;
+    async function initPortal() {
+      const loadingEl = document.getElementById("loading-state");
+      const errorEl = document.getElementById("error-state");
+      const errorMsgEl = document.getElementById("error-message");
+      const portalEl = document.getElementById("portal-content");
 
-            let photoUrl = "";
-            let emailVal = "—";
-            let matchedPhone = cPhone || "—";
+      const urlParams = new URLSearchParams(window.location.search);
+      let phone = cleanDigits(urlParams.get("phone"));
 
-            if (cell3 && cell3 !== "Vacant") {
-              const matched = allFormMembers.find(
-                (fm) =>
-                  (fm.phone &&
-                    cPhone &&
-                    fm.phone.slice(-10) === cPhone.slice(-10)) ||
-                  (fm.name &&
-                    cName &&
-                    (cell3.toLowerCase().includes(fm.name.toLowerCase()) ||
-                      fm.name.toLowerCase().includes(cName.toLowerCase()))),
-              );
-              if (matched) {
-                if (matched.photoUrl) photoUrl = matched.photoUrl;
-                if (matched.email) emailVal = matched.email;
-                if (matched.phone) matchedPhone = matched.phone;
+      // Fallback demo phone number if none is supplied in URL
+      if (!phone) {
+        phone = "9856271310";
+      }
+
+      try {
+        // 1. Member lookup
+        const memberRows = await fetchSheetData("Form Responses 1");
+        let member = null;
+        for (const r of memberRows) {
+          if (!r?.c) continue;
+          const rowPhone = cleanDigits(r.c[4]?.v ?? r.c[3]?.v ?? "");
+          if (
+            rowPhone &&
+            (rowPhone === phone ||
+              (rowPhone.length >= 10 &&
+                phone.length >= 10 &&
+                rowPhone.slice(-10) === phone.slice(-10)))
+          ) {
+            member = {
+              registeredAt: formatDateTimeCell(r.c[0]).formatted,
+              email: String(r.c[1]?.v || ""),
+              name: String(r.c[2]?.v || "Member"),
+              gender: String(r.c[3]?.v || "-"),
+              phone: String(r.c[4]?.v || phone),
+              photoUrl: formatDriveUrl(r.c[5]?.v || r.c[6]?.v || ""),
+            };
+            break;
+          }
+        }
+
+        // Process form members list to match photos cleanly
+        const allFormMembers = memberRows
+          .map((r) => {
+            if (!r?.c) return null;
+            const fmEmail = String(r.c[1]?.v || "").trim();
+            const fmName = String(r.c[2]?.v || "").trim();
+            const fmPhone = cleanDigits(r.c[4]?.v ?? r.c[3]?.v ?? "");
+            const fmPhoto = formatDriveUrl(r.c[5]?.v || r.c[6]?.v || "");
+            return {
+              email: fmEmail,
+              name: fmName,
+              phone: fmPhone,
+              photoUrl: fmPhoto,
+            };
+          })
+          .filter(Boolean);
+
+        if (!member) {
+          // Fallback dummy member if lookup misses
+          member = {
+            registeredAt: "01-Jan-2026",
+            email: "member@kacm.org",
+            name: "Keisham Premkumar",
+            gender: "Male",
+            phone: phone,
+            photoUrl: "",
+          };
+          // Match photo from registered form responses if available
+          const matchedFm = allFormMembers.find(
+            (fm) =>
+              (fm.phone && fm.phone.slice(-10) === phone.slice(-10)) ||
+              (fm.name &&
+                member.name &&
+                fm.name.toLowerCase().includes(member.name.toLowerCase())),
+          );
+          if (matchedFm && matchedFm.photoUrl) {
+            member.photoUrl = matchedFm.photoUrl;
+          }
+        }
+
+        // 2. Contributions
+        const contribRows = await fetchSheetData("Contributions");
+        let userContributions = [];
+        for (const cr of contribRows) {
+          if (!cr?.c) continue;
+          const memberKey = String(cr.c[1]?.v || "");
+          const cPhone = cleanDigits(memberKey);
+          if (
+            !(cPhone && cPhone.slice(-10) === phone.slice(-10)) &&
+            !memberKey.toLowerCase().includes(member.name.toLowerCase())
+          )
+            continue;
+
+          const id = String(
+            cr.c[0]?.v || Math.random().toString(36).slice(7),
+          );
+          const categoryName = String(
+            cr.c[14]?.v || cr.c[2]?.v || "General Contribution",
+          );
+          const dtObj = formatDateTimeCell(cr.c[3]);
+          const frequency = String(cr.c[4]?.v || "One Time");
+          const amount = parseFloat(cr.c[5]?.v) || 0;
+          const remarks = String(cr.c[6]?.v || "");
+          const paymentVia = String(cr.c[11]?.v || "Online / UPI");
+          let invoiceUrl = "";
+          if (cr.c[13]?.v && String(cr.c[13].v).startsWith("http")) {
+            invoiceUrl = String(cr.c[13].v).trim();
+          } else {
+            for (let i = cr.c.length - 1; i >= 0; i--) {
+              const v = String(cr.c[i]?.v || "").trim();
+              if (v.startsWith("http")) {
+                invoiceUrl = v;
+                break;
               }
             }
+          }
+          userContributions.push({
+            id,
+            categoryName,
+            dateStr: dtObj.formatted,
+            timestamp: dtObj.timestamp,
+            frequency,
+            amount,
+            paymentVia,
+            remarks,
+            invoiceUrl,
+          });
+        }
+        userContributions.sort(
+          (a, b) => (b.timestamp || 0) - (a.timestamp || 0),
+        );
 
+        // 3. Core Team
+        const coreRows = await fetchSheetData("Core Team");
+        let coreRole = null;
+
+        coreTeamGlobalList = [];
+        for (const tr of coreRows) {
+          if (!tr?.c) continue;
+          const cell0 = String(tr.c[0]?.v || "");
+          const cell1 = String(tr.c[1]?.v || "");
+          const cell2 = String(tr.c[2]?.v || "");
+          const cell3 = String(tr.c[3]?.v || "");
+          if (
+            cell0.toLowerCase().includes("designation") ||
+            cell1.toLowerCase().includes("designation")
+          )
+            continue;
+          const designation = cell1 || cell0;
+          if (!designation || designation === "—") continue;
+          const cPhone = cleanDigits(cell3);
+          const cName = cell3 ? cell3.split(":")[0].trim() : "Vacant";
+          if (cPhone && cPhone.slice(-10) === phone.slice(-10))
+            coreRole = designation;
+
+          let photoUrl = "";
+          let emailVal = "—";
+          let matchedPhone = cPhone || "—";
+
+          if (cell3 && cell3 !== "Vacant") {
+            const matched = allFormMembers.find(
+              (fm) =>
+                (fm.phone &&
+                  cPhone &&
+                  fm.phone.slice(-10) === cPhone.slice(-10)) ||
+                (fm.name &&
+                  cName &&
+                  (cell3.toLowerCase().includes(fm.name.toLowerCase()) ||
+                    fm.name.toLowerCase().includes(cName.toLowerCase()))),
+            );
+            if (matched) {
+              if (matched.photoUrl) photoUrl = matched.photoUrl;
+              if (matched.email) emailVal = matched.email;
+              if (matched.phone) matchedPhone = matched.phone;
+            }
+          }
+
+          coreTeamGlobalList.push({
+            designation,
+            roles: cell2 || "Executive Office Bearer",
+            memberStr: cell3 || "Vacant",
+            nameClean: cName,
+            phone: matchedPhone,
+            email: emailVal,
+            photoUrl,
+          });
+        }
+
+        if (coreTeamGlobalList.length === 0) {
+          [
+            {
+              designation: "President",
+              roles: "Overall Administration & Governance",
+              memberStr: "Thounaojam Ibohal: 9862581747",
+            },
+            {
+              designation: "General Secretary",
+              roles: "Operations & Community Affairs",
+              memberStr: "Keisham Premkumar: 9856271310",
+            },
+            {
+              designation: "Treasurer",
+              roles: "Finance, Accounts & Vouchers",
+              memberStr: "Pukhrambam Hiteshore Singh: 9862973977",
+            },
+            {
+              designation: "Digital & IT Coordinator",
+              roles: "Apps, Web Portal & Records",
+              memberStr: "Hiteshore Official: 9731399725",
+            },
+          ].forEach((dt) => {
+            const cp = cleanDigits(dt.memberStr);
+            if (cp && cp.slice(-10) === phone.slice(-10))
+              coreRole = dt.designation;
+            const cName = dt.memberStr
+              .substring(0, dt.memberStr.lastIndexOf(":"))
+              .trim();
             coreTeamGlobalList.push({
-              designation,
-              roles: cell2 || "Executive Office Bearer",
-              memberStr: cell3 || "Vacant",
+              designation: dt.designation,
+              roles: dt.roles,
+              memberStr: dt.memberStr,
               nameClean: cName,
-              phone: matchedPhone,
-              email: emailVal,
-              photoUrl,
+              phone: cp,
+              email: "—",
+              photoUrl: "",
             });
-          }
+          });
+        }
 
-          if (coreTeamGlobalList.length === 0) {
-            [
-              {
-                designation: "President",
-                roles: "Overall Administration & Governance",
-                memberStr: "Thounaojam Ibohal: 9862581747",
-              },
-              {
-                designation: "General Secretary",
-                roles: "Operations & Community Affairs",
-                memberStr: "Keisham Premkumar: 9856271310",
-              },
-              {
-                designation: "Treasurer",
-                roles: "Finance, Accounts & Vouchers",
-                memberStr: "Pukhrambam Hiteshore Singh: 9862973977",
-              },
-              {
-                designation: "Digital & IT Coordinator",
-                roles: "Apps, Web Portal & Records",
-                memberStr: "Hiteshore Official: 9731399725",
-              },
-            ].forEach((dt) => {
-              const cp = cleanDigits(dt.memberStr);
-              if (cp && cp.slice(-10) === phone.slice(-10))
-                coreRole = dt.designation;
-              const cName = dt.memberStr
-                .substring(0, dt.memberStr.lastIndexOf(":"))
-                .trim();
-              coreTeamGlobalList.push({
-                designation: dt.designation,
-                roles: dt.roles,
-                memberStr: dt.memberStr,
-                nameClean: cName,
-                phone: cp,
-                email: "—",
-                photoUrl: "",
-              });
-            });
-          }
+        // ── RENDER ──
 
-          // ── RENDER ──
+        // Profile details
+        document.getElementById("member-name").textContent = member.name;
+        document.getElementById("gender-val").textContent = member.gender;
+        document.getElementById("phone-val").textContent = member.phone;
+        if (member.email) {
+          document.getElementById("email-chip").classList.remove("hidden");
+          document.getElementById("email-val").textContent = member.email;
+        }
 
-          // Profile details
-          document.getElementById("member-name").textContent = member.name;
-          document.getElementById("gender-val").textContent = member.gender;
-          document.getElementById("phone-val").textContent = member.phone;
-          if (member.email) {
-            document.getElementById("email-chip").classList.remove("hidden");
-            document.getElementById("email-val").textContent = member.email;
-          }
-
-          // Render Hero Profile Photo securely
-          const avatarImg = document.getElementById("avatar-img");
-          const avatarFallback = document.getElementById("avatar-fallback");
-          if (member.photoUrl) {
-            avatarImg.src = member.photoUrl;
-            avatarImg.onload = () => {
-              avatarImg.style.display = "block";
-              if (avatarFallback) avatarFallback.style.display = "none";
-            };
-            avatarImg.onerror = () => {
-              avatarImg.style.display = "none";
-              if (avatarFallback) avatarFallback.style.display = "inline-block";
-            };
-          } else {
+        // Render Hero Profile Photo securely
+        const avatarImg = document.getElementById("avatar-img");
+        const avatarFallback = document.getElementById("avatar-fallback");
+        if (member.photoUrl) {
+          avatarImg.src = member.photoUrl;
+          avatarImg.onload = () => {
+            avatarImg.style.display = "block";
+            if (avatarFallback) avatarFallback.style.display = "none";
+          };
+          avatarImg.onerror = () => {
             avatarImg.style.display = "none";
             if (avatarFallback) avatarFallback.style.display = "inline-block";
-          }
+          };
+        } else {
+          avatarImg.style.display = "none";
+          if (avatarFallback) avatarFallback.style.display = "inline-block";
+        }
 
-          if (coreRole) {
-            document
-              .getElementById("core-team-badge")
-              .classList.remove("hidden");
-            document.getElementById("core-team-role").textContent = coreRole;
-          }
+        if (coreRole) {
+          document
+            .getElementById("core-team-badge")
+            .classList.remove("hidden");
+          document.getElementById("core-team-role").textContent = coreRole;
+        }
 
-          // KPIs
-          const totalAmount = userContributions.reduce(
-            (s, c) => s + c.amount,
-            0,
+        // KPIs
+        const totalAmount = userContributions.reduce(
+          (s, c) => s + c.amount,
+          0,
+        );
+        const categories = new Set(
+          userContributions.map((c) => c.categoryName),
+        ).size;
+        document.getElementById("kpi-total-amount").textContent =
+          `₹${totalAmount.toLocaleString("en-IN")}`;
+        document.getElementById("kpi-categories").textContent = categories;
+        document.getElementById("kpi-transactions").textContent =
+          userContributions.length;
+
+        const display = userContributions.slice(0, 10);
+        document.getElementById("contrib-count-badge").textContent =
+          `${display.length} of ${userContributions.length}`;
+
+        // Contribution cards
+        const cardsContainer = document.getElementById(
+          "contrib-cards-container",
+        );
+        cardsContainer.innerHTML = "";
+        if (userContributions.length === 0) {
+          userContributions.push({
+            id: "DEMO1",
+            categoryName: "General Fund Contribution",
+            dateStr: "01-Jan-2026 10:00 AM",
+            timestamp: Date.now(),
+            frequency: "One Time",
+            amount: 1000,
+            paymentVia: "UPI / Online",
+            remarks: "Sample demo receipt",
+            invoiceUrl: "",
+          });
+        }
+
+        userContributions.slice(0, 10).forEach((c) => {
+          const freq = c.frequency.toLowerCase();
+          const freqClass = freq.includes("monthly")
+            ? "monthly"
+            : freq.includes("yearly")
+              ? "yearly"
+              : freq.includes("one")
+                ? "onetime"
+                : "default";
+
+          const card = document.createElement("div");
+          card.className = `contrib-card ${freqClass}`;
+          card.setAttribute(
+            "onclick",
+            `openReceipt('${c.id}','${encodeURIComponent(c.invoiceUrl || "")}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')`,
           );
-          const categories = new Set(
-            userContributions.map((c) => c.categoryName),
-          ).size;
-          document.getElementById("kpi-total-amount").textContent =
-            `₹${totalAmount.toLocaleString("en-IN")}`;
-          document.getElementById("kpi-categories").textContent = categories;
-          document.getElementById("kpi-transactions").textContent =
-            userContributions.length;
 
-          const display = userContributions.slice(0, 10);
-          document.getElementById("contrib-count-badge").textContent =
-            `${display.length} of ${userContributions.length}`;
-
-          // Contribution cards
-          const cardsContainer = document.getElementById(
-            "contrib-cards-container",
-          );
-          cardsContainer.innerHTML = "";
-          if (userContributions.length === 0) {
-            userContributions.push({
-              id: "DEMO1",
-              categoryName: "General Fund Contribution",
-              dateStr: "01-Jan-2026 10:00 AM",
-              timestamp: Date.now(),
-              frequency: "One Time",
-              amount: 1000,
-              paymentVia: "UPI / Online",
-              remarks: "Sample demo receipt",
-              invoiceUrl: "",
-            });
-          }
-
-          userContributions.slice(0, 10).forEach((c) => {
-            const freq = c.frequency.toLowerCase();
-            const freqClass = freq.includes("monthly")
-              ? "monthly"
-              : freq.includes("yearly")
-                ? "yearly"
-                : freq.includes("one")
-                  ? "onetime"
-                  : "default";
-
-            const card = document.createElement("div");
-            card.className = `contrib-card ${freqClass}`;
-            card.setAttribute(
-              "onclick",
-              `openReceipt('${c.id}','${encodeURIComponent(c.invoiceUrl || "")}','${encodeURIComponent(c.categoryName)}',${c.amount},'${encodeURIComponent(c.dateStr)}','${encodeURIComponent(c.paymentVia)}')`,
-            );
-
-            card.innerHTML = `
+          card.innerHTML = `
           <div class="contrib-card-top">
             <span class="freq-pill ${freqClass}">${c.frequency}</span>
             <span class="contrib-id">#${c.id}</span>
@@ -2612,32 +2536,32 @@
           <div class="contrib-actions">
             <span class="btn btn-receipt">Show Details</span>
           </div>`;
-            cardsContainer.appendChild(card);
-          });
-          document.getElementById("cards-track").style.display = "block";
+          cardsContainer.appendChild(card);
+        });
+        document.getElementById("cards-track").style.display = "block";
 
-          // Team grid with click handler to trigger ID Card popup
-          const teamGrid = document.getElementById("core-team-grid");
-          teamGrid.innerHTML = "";
-          coreTeamGlobalList.forEach((t, idx) => {
-            const theme = getTeamTheme(t.designation, idx);
-            const isVacant = !t.memberStr || t.memberStr === "Vacant";
-            const initials =
-              t.nameClean && !isVacant
-                ? t.nameClean
-                    .split(" ")
-                    .slice(0, 2)
-                    .map((w) => w[0])
-                    .join("")
-                    .toUpperCase()
-                : "?";
+        // Team grid with click handler to trigger ID Card popup
+        const teamGrid = document.getElementById("core-team-grid");
+        teamGrid.innerHTML = "";
+        coreTeamGlobalList.forEach((t, idx) => {
+          const theme = getTeamTheme(t.designation, idx);
+          const isVacant = !t.memberStr || t.memberStr === "Vacant";
+          const initials =
+            t.nameClean && !isVacant
+              ? t.nameClean
+                .split(" ")
+                .slice(0, 2)
+                .map((w) => w[0])
+                .join("")
+                .toUpperCase()
+              : "?";
 
-            const card = document.createElement("div");
-            card.className = `team-card${isVacant ? " team-card-vacant" : ""}`;
-            if (isVacant) card.style.opacity = "0.55";
-            card.setAttribute("onclick", `openIdCard(${idx})`);
+          const card = document.createElement("div");
+          card.className = `team-card${isVacant ? " team-card-vacant" : ""}`;
+          if (isVacant) card.style.opacity = "0.55";
+          card.setAttribute("onclick", `openIdCard(${idx})`);
 
-            card.innerHTML = `
+          card.innerHTML = `
           <div class="team-avatar" style="background:${theme.avatarBg};">
             <span class="team-initials" style="color:${theme.initColor};">${initials}</span>
             ${t.photoUrl ? `<img src="${t.photoUrl}" alt="${t.nameClean}" onload="this.style.display='block';" onerror="this.style.display='none';" />` : ""}
@@ -2649,111 +2573,133 @@
             </div>
           </div>
           ${t.phone && !isVacant ? `<a href="tel:${t.phone}" class="team-phone-btn" onclick="event.stopPropagation();" title="Call">📞</a>` : ""}`;
-            teamGrid.appendChild(card);
-          });
+          teamGrid.appendChild(card);
+        });
 
-          loadingEl.classList.add("hidden");
-          portalEl.classList.remove("hidden");
-          portalEl.style.display = "flex";
-          lucide.createIcons();
-        } catch (err) {
-          console.error(err);
-          loadingEl.classList.add("hidden");
-          errorEl.classList.remove("hidden");
-          errorMsgEl.textContent = `Could not load data. Error: ${err.message}`;
-        }
+        loadingEl.classList.add("hidden");
+        portalEl.classList.remove("hidden");
+        portalEl.style.display = "flex";
+        lucide.createIcons();
+      } catch (err) {
+        console.error(err);
+        loadingEl.classList.add("hidden");
+        errorEl.classList.remove("hidden");
+        errorMsgEl.textContent = `Could not load data. Error: ${err.message}`;
       }
+    }
 
-      // ID Card popup logic
-      function openIdCard(index) {
-        const member = coreTeamGlobalList[index];
-        if (!member) return;
+    // ID Card popup logic
+    function openIdCard(index) {
+      const sound = document.getElementById("memberOpenSound");
 
-        document.getElementById("id-card-name").textContent = member.nameClean;
-        document.getElementById("id-card-desig").textContent =
-          member.designation;
-        document.getElementById("id-card-role-val").textContent = member.roles;
-        document.getElementById("id-card-email-val").textContent = member.email;
-        document.getElementById("id-card-phone-val").textContent =
-          member.phone !== "—" ? `+91 ${member.phone}` : "—";
-        document.getElementById("id-card-id-num").textContent =
-          `ID: KACM-OFFICIAL-${String(index + 1).padStart(3, "0")}`;
+      if (sound) {
+          sound.currentTime = 0;
+          sound.play().catch(() => {});
+      }
+      
+      const member = coreTeamGlobalList[index];
+      if (!member) return;
 
-        const imgEl = document.getElementById("id-card-img");
-        const fallbackEl = document.getElementById("id-card-fallback");
+      document.getElementById("id-card-name").textContent = member.nameClean;
+      document.getElementById("id-card-desig").textContent =
+        member.designation;
+      document.getElementById("id-card-role-val").textContent = member.roles;
+      document.getElementById("id-card-email-val").textContent = member.email;
+      document.getElementById("id-card-phone-val").textContent =
+        member.phone !== "—" ? `+91 ${member.phone}` : "—";
+      document.getElementById("id-card-id-num").textContent =
+        `ID: KACM-OFFICIAL-${String(index + 1).padStart(3, "0")}`;
 
-        if (member.photoUrl) {
-          imgEl.src = member.photoUrl;
-          imgEl.onload = () => {
-            imgEl.style.display = "block";
-            fallbackEl.style.display = "none";
-          };
-          imgEl.onerror = () => {
-            imgEl.style.display = "none";
-            fallbackEl.style.display = "flex";
-          };
-        } else {
+      const imgEl = document.getElementById("id-card-img");
+      const fallbackEl = document.getElementById("id-card-fallback");
+
+      if (member.photoUrl) {
+        imgEl.src = member.photoUrl;
+        imgEl.onload = () => {
+          imgEl.style.display = "block";
+          fallbackEl.style.display = "none";
+        };
+        imgEl.onerror = () => {
           imgEl.style.display = "none";
           fallbackEl.style.display = "flex";
-        }
-
-        document.getElementById("id-card-modal").classList.add("open");
+        };
+      } else {
+        imgEl.style.display = "none";
+        fallbackEl.style.display = "flex";
       }
 
-      function closeIdModal() {
-        document.getElementById("id-card-modal").classList.remove("open");
+      document.getElementById("id-card-modal").classList.add("open");
+    }
+
+    function closeIdModal() {
+      document.getElementById("id-card-modal").classList.remove("open");
+    }
+
+    document.getElementById("close-id-modal-btn").onclick = closeIdModal;
+    document
+      .getElementById("id-card-modal")
+      .addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeIdModal();
+      });
+
+    function openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
+      const sound = document.getElementById("receiptOpenSound");
+
+      if (sound) {
+        sound.currentTime = 0;
+        sound.play().catch(() => { });
       }
 
-      document.getElementById("close-id-modal-btn").onclick = closeIdModal;
-      document
-        .getElementById("id-card-modal")
-        .addEventListener("click", (e) => {
-          if (e.target === e.currentTarget) closeIdModal();
+      activeReceiptInvoiceUrl = decodeURIComponent(urlEnc || "");
+      document.getElementById("rcpt-id").textContent = id.toUpperCase();
+      document.getElementById("rcpt-member").textContent =
+        document.getElementById("member-name").textContent;
+      document.getElementById("rcpt-category").textContent =
+        decodeURIComponent(catEnc);
+      document.getElementById("rcpt-date").textContent =
+        decodeURIComponent(dateEnc);
+      document.getElementById("rcpt-mode").textContent =
+        decodeURIComponent(modeEnc);
+      document.getElementById("rcpt-amount").textContent =
+        `₹${Number(amount).toLocaleString("en-IN")}`;
+      document.getElementById("receipt-modal").classList.add("open");
+
+      // Subtle confetti burst on receipt open
+      if (typeof confetti === "function") {
+        confetti({
+          particleCount: 35,
+          spread: 60,
+          origin: { y: 0.8 },
+          colors: ["#1d4ed8", "#f59e0b", "#0d9488"],
         });
-
-      function openReceipt(id, urlEnc, catEnc, amount, dateEnc, modeEnc) {
-        activeReceiptInvoiceUrl = decodeURIComponent(urlEnc || "");
-        document.getElementById("rcpt-id").textContent = id.toUpperCase();
-        document.getElementById("rcpt-member").textContent =
-          document.getElementById("member-name").textContent;
-        document.getElementById("rcpt-category").textContent =
-          decodeURIComponent(catEnc);
-        document.getElementById("rcpt-date").textContent =
-          decodeURIComponent(dateEnc);
-        document.getElementById("rcpt-mode").textContent =
-          decodeURIComponent(modeEnc);
-        document.getElementById("rcpt-amount").textContent =
-          `₹${Number(amount).toLocaleString("en-IN")}`;
-        document.getElementById("receipt-modal").classList.add("open");
-
-        // Subtle confetti burst on receipt open
-        if (typeof confetti === "function") {
-          confetti({
-            particleCount: 35,
-            spread: 60,
-            origin: { y: 0.8 },
-            colors: ["#1d4ed8", "#f59e0b", "#0d9488"],
-          });
-        }
       }
+    }
 
-      function printReceiptFromModal() {
-        if (activeReceiptInvoiceUrl?.startsWith("http")) {
-          window.open(activeReceiptInvoiceUrl, "_blank");
-        } else window.print();
-      }
+    function printReceiptFromModal() {
+      if (activeReceiptInvoiceUrl?.startsWith("http")) {
+        window.open(activeReceiptInvoiceUrl, "_blank");
+      } else window.print();
+    }
 
-      function closeModal() {
-        document.getElementById("receipt-modal").classList.remove("open");
-      }
-      document.getElementById("close-receipt-btn").onclick = closeModal;
-      document
-        .getElementById("receipt-modal")
-        .addEventListener("click", (e) => {
-          if (e.target === e.currentTarget) closeModal();
-        });
+    function closeModal() {
+      document.getElementById("receipt-modal").classList.remove("open");
+    }
+    document.getElementById("close-receipt-btn").onclick = closeModal;
+    document
+      .getElementById("receipt-modal")
+      .addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeModal();
+      });
 
-      document.addEventListener("DOMContentLoaded", initPortal);
-    </script>
-  </body>
+    document.addEventListener("DOMContentLoaded", initPortal);
+  </script>
+  <audio id="receiptOpenSound" preload="auto">
+    <source src="mixkit-long-pop-2358.wav" type="audio/mpeg">
+  </audio>
+
+  <audio id="memberOpenSound" preload="auto">
+    <source src="mixkit-message-pop-alert-2354.mp3" type="audio/mpeg">
+  </audio>
+</body>
+
 </html>
